@@ -442,14 +442,21 @@
 <div class="modal-overlay" id="authModal">
   <div class="modal modal-pos">
     <button class="modal-close" onclick="closeModal()">✕</button>
-    <h2 id="modalTitle">LOGIN</h2>
+    <h2>MASUK</h2>
+    <div style="color:var(--gray);font-size:0.82rem;text-align:center;margin-bottom:16px;line-height:1.5;">
+      Masukkan email kamu. Kami akan kirim link masuk ke emailmu — tanpa password! 🔗
+    </div>
     <div class="modal-error" id="modalError"></div>
-    <input type="email" id="authEmail" placeholder="Email">
-    <input type="password" id="authPassword" placeholder="Password">
-    <input type="text" id="authName" placeholder="Nama tampilan" style="display:none">
-    <button class="modal-submit" onclick="handleAuth()">Masuk</button>
-    <div class="modal-toggle" id="modalToggle">
-      Belum punya akun? <span onclick="switchToRegister()">Daftar</span>
+    <div id="modalStep1">
+      <input type="text" id="authName" placeholder="Nama tampilan (misal: BiraFans)">
+      <input type="email" id="authEmail" placeholder="Email kamu">
+      <button class="modal-submit" onclick="handleSendLink()">Kirim Magic Link 📧</button>
+    </div>
+    <div id="modalStep2" style="display:none;text-align:center;">
+      <div style="font-size:2.5rem;margin-bottom:12px;">📬</div>
+      <div style="color:white;font-weight:700;margin-bottom:8px;">Cek emailmu!</div>
+      <div style="color:var(--gray);font-size:0.85rem;line-height:1.5;" id="sentToText"></div>
+      <button class="modal-submit" style="margin-top:16px;" onclick="resetModal()">Kirim ulang / ganti email</button>
     </div>
   </div>
 </div>
@@ -457,7 +464,7 @@
 <!-- FIREBASE SDKs -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getDatabase, ref, push, onValue, remove, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
@@ -482,7 +489,6 @@ let allItems = [];
 let filteredItems = [];
 let currentPage = 1;
 let currentUser = null;
-let isLogin = true;
 
 // ─── AUTH STATE ───────────────────────────────────────────────
 onAuthStateChanged(auth, user => {
@@ -721,54 +727,69 @@ window._submitComment = async () => {
   document.getElementById('commentText').value = '';
 };
 
-// ─── AUTH MODAL ───────────────────────────────────────────────
+// ─── AUTH MODAL (MAGIC LINK) ──────────────────────────────────
+const ACTION_CODE_SETTINGS = {
+  url: 'https://biragm-website.netlify.app/',
+  handleCodeInApp: true,
+};
+
 window.closeModal = () => {
   document.getElementById('authModal').classList.remove('active');
   document.getElementById('modalError').textContent = '';
 };
 
-window.switchToRegister = () => {
-  isLogin = false;
-  document.getElementById('modalTitle').textContent = 'DAFTAR';
-  document.getElementById('authName').style.display = 'block';
-  document.getElementById('modalToggle').innerHTML = 'Sudah punya akun? <span onclick="switchToLogin()">Masuk</span>';
+window.resetModal = () => {
+  document.getElementById('modalStep1').style.display = 'block';
+  document.getElementById('modalStep2').style.display = 'none';
   document.getElementById('modalError').textContent = '';
 };
 
-window.switchToLogin = () => {
-  isLogin = true;
-  document.getElementById('modalTitle').textContent = 'LOGIN';
-  document.getElementById('authName').style.display = 'none';
-  document.getElementById('modalToggle').innerHTML = 'Belum punya akun? <span onclick="switchToRegister()">Daftar</span>';
-  document.getElementById('modalError').textContent = '';
-};
-
-window.handleAuth = async () => {
+window.handleSendLink = async () => {
   const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value;
+  const name = document.getElementById('authName').value.trim();
   const errEl = document.getElementById('modalError');
   errEl.textContent = '';
+  if (!email) { errEl.textContent = 'Masukkan email dulu ya!'; return; }
+  if (!name) { errEl.textContent = 'Masukkan nama tampilan dulu!'; return; }
   try {
-    if (isLogin) {
-      await signInWithEmailAndPassword(auth, email, password);
-    } else {
-      const name = document.getElementById('authName').value.trim() || email.split('@')[0];
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(cred.user, { displayName: name });
-    }
-    closeModal();
+    // Save name & email to localStorage for after redirect
+    localStorage.setItem('emailForSignIn', email);
+    localStorage.setItem('nameForSignIn', name);
+    await sendSignInLinkToEmail(auth, email, ACTION_CODE_SETTINGS);
+    document.getElementById('modalStep1').style.display = 'none';
+    document.getElementById('modalStep2').style.display = 'block';
+    document.getElementById('sentToText').textContent = `Link dikirim ke ${email}. Buka emailmu dan klik link yang kami kirim. Link berlaku 1 jam.`;
   } catch(e) {
     const msgs = {
-      'auth/user-not-found': 'Email tidak ditemukan.',
-      'auth/wrong-password': 'Password salah.',
-      'auth/email-already-in-use': 'Email sudah terdaftar.',
-      'auth/weak-password': 'Password minimal 6 karakter.',
       'auth/invalid-email': 'Format email tidak valid.',
-      'auth/invalid-credential': 'Email atau password salah.',
+      'auth/too-many-requests': 'Terlalu banyak percobaan, coba lagi nanti.',
     };
     errEl.textContent = msgs[e.code] || e.message;
   }
 };
+
+// ─── HANDLE MAGIC LINK REDIRECT ───────────────────────────────
+if (isSignInWithEmailLink(auth, window.location.href)) {
+  let email = localStorage.getItem('emailForSignIn');
+  let name = localStorage.getItem('nameForSignIn');
+  if (!email) {
+    email = window.prompt('Masukkan emailmu untuk konfirmasi:');
+  }
+  if (email) {
+    signInWithEmailLink(auth, email, window.location.href).then(async (result) => {
+      localStorage.removeItem('emailForSignIn');
+      // Set display name if new user or no display name
+      if (name && !result.user.displayName) {
+        await updateProfile(result.user, { displayName: name });
+        localStorage.removeItem('nameForSignIn');
+      }
+      // Clean URL
+      window.history.replaceState({}, document.title, '/');
+    }).catch(e => {
+      console.error('Magic link sign in error:', e);
+    });
+  }
+}
 
 // ─── UTILS ────────────────────────────────────────────────────
 function escHtml(str) {
