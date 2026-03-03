@@ -15,9 +15,9 @@
 /* ── VARIABLES ──────────────────────────────────── */
 :root {
   --navy:    #0a1628;
-  --navy2:   #0d1f3c;
-  --accent:  #2563eb;
-  --accent2: #3b82f6;
+  --navy2:   ##23475e;
+  --accent:  #0d7fc8;
+  --accent2: #2423b3;
   --gold:    #f59e0b;
   --green:   #10b981;
   --white:   #fff;
@@ -119,11 +119,20 @@ header {
 .tab-btn {
   flex: 1; padding: 13px 0; background: none; border: none; cursor: pointer;
   font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: .88rem;
-  color: var(--gray2); letter-spacing: 1px; transition: all .2s;
+  color: rgba(100,116,139,0.45);
+  letter-spacing: 1px; transition: all .25s;
   border-bottom: 3px solid transparent;
 }
-.tab-btn.active          { color: var(--white); border-bottom-color: var(--accent); }
-.tab-btn.tab-paid.active { color: var(--gold);  border-bottom-color: var(--gold); }
+.tab-btn.active {
+  color: var(--white);
+  border-bottom-color: var(--accent);
+  background: rgba(37,99,235,0.08);
+}
+.tab-btn.tab-paid.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+  background: rgba(245,158,11,0.08);
+}
 
 /* ── MAIN ───────────────────────────────────────── */
 main { position: relative; z-index: 1; padding: 18px 14px 28px; max-width: 500px; margin: 0 auto; }
@@ -490,11 +499,7 @@ footer { position: relative; z-index: 1; border-top: 1px solid rgba(37,99,235,.1
     <div class="admin-items-list" id="adminItemsList"></div>
   </div>
 
-  <!-- Ad: Native Banner -->
-  <div class="ad-block">
-    <script async="async" data-cfasync="false" src="https://upholdbrilliancerecast.com/0a4bfa865cb678c32078898b80923227/invoke.js"></script>
-    <div id="container-0a4bfa865cb678c32078898b80923227"></div>
-  </div>
+
 
   <!-- Cards -->
   <div id="cardsList">
@@ -523,6 +528,8 @@ footer { position: relative; z-index: 1; border-top: 1px solid rgba(37,99,235,.1
       <div class="loading"><div class="spinner"></div></div>
     </div>
   </div>
+  
+
 
 </main>
 
@@ -543,6 +550,12 @@ footer { position: relative; z-index: 1; border-top: 1px solid rgba(37,99,235,.1
   <div class="footer-copy">© 2026 BIRA GM</div>
 </footer>
 
+
+    <!-- Ad: Native Banner -->
+  <div class="ad-block">
+    <script async="async" data-cfasync="false" src="https://upholdbrilliancerecast.com/0a4bfa865cb678c32078898b80923227/invoke.js"></script>
+    <div id="container-0a4bfa865cb678c32078898b80923227"></div>
+  </div>
 <!-- ── AUTH MODAL ──────────────────────────────────────── -->
 <div class="modal-overlay" id="authModal">
   <div class="modal">
