@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BIRA GM</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Exo+2:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
 <!-- Adsterra Popunder -->
 <script src="https://upholdbrilliancerecast.com/60/45/90/604590fe5ba0fe019a411351f2307164.js"></script>
@@ -12,463 +12,521 @@
 <script src="https://upholdbrilliancerecast.com/52/f2/92/52f2928b64b329281d613e02df315ebb.js"></script>
 
 <style>
+/* ── VARIABLES ──────────────────────────────────── */
 :root {
-  --navy: #0a1628;
-  --navy2: #0d1f3c;
-  --accent: #1B263B;
+  --navy:    #0a1628;
+  --navy2:   #0d1f3c;
+  --accent:  #2563eb;
   --accent2: #3b82f6;
-  --gold: #f59e0b;
-  --green: #10b981;
-  --white: #ffffff;
-  --gray: #94a3b8;
-  --card-bg: rgba(255,255,255,0.97);
-  --title-bg: rgba(15,30,60,0.92);
+  --gold:    #f59e0b;
+  --green:   #10b981;
+  --white:   #fff;
+  --gray:    #94a3b8;
+  --gray2:   #64748b;
+  --title-bg: rgba(13,27,58,0.95);
 }
+
+/* ── RESET ──────────────────────────────────────── */
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
   background: var(--navy);
   font-family: 'Exo 2', sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
+  color: var(--white);
 }
 body::before {
-  content:'';
-  position:fixed; inset:0;
+  content: '';
+  position: fixed; inset: 0;
   background:
-    radial-gradient(ellipse at 20% 50%, rgba(37,99,235,0.07) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(59,130,246,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 15% 60%, rgba(37,99,235,.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 15%, rgba(59,130,246,.04) 0%, transparent 50%),
     var(--navy);
-  z-index:0; pointer-events:none;
+  z-index: 0; pointer-events: none;
 }
 
-/* HEADER */
+/* ── HEADER ─────────────────────────────────────── */
 header {
-  position:sticky; top:0; z-index:100;
-  background: linear-gradient(135deg, #0d1f3c 0%, #1a3a6e 50%, #0d1f3c 100%);
+  position: sticky; top: 0; z-index: 100;
+  background: linear-gradient(135deg, #091525 0%, #162d54 50%, #091525 100%);
   border-bottom: 2px solid var(--accent);
-  box-shadow: 0 4px 24px rgba(37,99,235,0.4);
-  padding: 0 16px; height:64px;
-  display:flex; align-items:center; justify-content:space-between;
+  box-shadow: 0 4px 24px rgba(37,99,235,.35);
+  padding: 0 16px; height: 62px;
+  display: flex; align-items: center; justify-content: space-between;
 }
-.header-left { display:flex; align-items:center; gap:12px; }
+.header-left  { display: flex; align-items: center; gap: 11px; }
+.header-right { display: flex; align-items: center; gap: 8px; }
 .logo-img {
-  width:48px; height:48px; border-radius:50%;
-  border:2px solid var(--accent2); object-fit:cover;
-  box-shadow: 0 0 12px rgba(59,130,246,0.6);
+  width: 46px; height: 46px; border-radius: 50%;
+  border: 2px solid var(--accent2); object-fit: cover;
+  box-shadow: 0 0 14px rgba(59,130,246,.55);
 }
 .logo-text {
-  font-family:'Orbitron',monospace; font-weight:900;
-  font-size:1.3rem; color:var(--white); letter-spacing:2px;
-  text-shadow: 0 0 20px rgba(59,130,246,0.8);
+  font-family: 'Orbitron', monospace; font-weight: 900;
+  font-size: 1.25rem; color: var(--white); letter-spacing: 2px;
+  text-shadow: 0 0 18px rgba(59,130,246,.7);
 }
-.header-right { display:flex; align-items:center; gap:10px; }
-.search-btn {
-  background:none; border:none; cursor:pointer;
-  color:var(--white); padding:8px; border-radius:50%; transition:all 0.2s;
-  display:flex; align-items:center;
+.icon-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--white); padding: 8px; border-radius: 50%;
+  transition: background .2s; display: flex; align-items: center; justify-content: center;
 }
-.search-btn:hover { background:rgba(255,255,255,0.1); }
+.icon-btn:hover { background: rgba(255,255,255,.09); }
 .auth-btn {
-  background:linear-gradient(135deg, var(--accent), var(--accent2));
-  border:none; color:white; padding:8px 16px;
-  border-radius:20px; cursor:pointer; font-family:'Exo 2',sans-serif;
-  font-weight:600; font-size:0.85rem; transition:all 0.2s;
-  box-shadow:0 2px 12px rgba(37,99,235,0.4);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border: none; color: #fff; padding: 7px 15px; border-radius: 20px;
+  cursor: pointer; font-family: 'Exo 2', sans-serif;
+  font-weight: 700; font-size: .82rem; transition: all .2s;
+  box-shadow: 0 2px 10px rgba(37,99,235,.35);
 }
-.auth-btn:hover { transform:translateY(-1px); }
-.user-info { display:flex; align-items:center; gap:8px; }
+.auth-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(37,99,235,.5); }
+.user-info { display: flex; align-items: center; gap: 8px; }
 .user-avatar {
-  width:32px; height:32px; border-radius:50%;
-  background:var(--accent); display:flex; align-items:center; justify-content:center;
-  font-weight:700; font-size:0.8rem; color:white;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: .78rem; color: #fff;
 }
 .logout-btn {
-  background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
-  color:white; padding:6px 12px; border-radius:16px; cursor:pointer;
-  font-size:0.78rem; transition:all 0.2s;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+  color: #fff; padding: 5px 11px; border-radius: 14px; cursor: pointer;
+  font-size: .75rem; transition: all .2s; font-family: 'Exo 2', sans-serif;
 }
-.logout-btn:hover { background:rgba(255,0,0,0.2); }
+.logout-btn:hover { background: rgba(239,68,68,.2); border-color: rgba(239,68,68,.3); }
 
-/* SEARCH */
+/* ── SEARCH ─────────────────────────────────────── */
 .search-bar {
-  display:none; padding:12px 16px;
-  background:var(--navy2);
-  border-bottom:1px solid rgba(37,99,235,0.3);
-  position:relative; z-index:99;
+  display: none; padding: 10px 16px;
+  background: var(--navy2); border-bottom: 1px solid rgba(37,99,235,.25);
+  position: relative; z-index: 99;
 }
-.search-bar.active { display:block; }
+.search-bar.open { display: block; }
 .search-bar input {
-  width:100%; padding:10px 16px;
-  background:rgba(255,255,255,0.08);
-  border:1px solid rgba(37,99,235,0.4);
-  border-radius:24px; color:white;
-  font-family:'Exo 2',sans-serif; font-size:0.95rem; outline:none;
+  width: 100%; padding: 9px 16px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(37,99,235,.35);
+  border-radius: 22px; color: #fff;
+  font-family: 'Exo 2', sans-serif; font-size: .9rem; outline: none;
 }
-.search-bar input::placeholder { color:var(--gray); }
+.search-bar input::placeholder { color: var(--gray2); }
 
-/* TABS */
+/* ── TABS ───────────────────────────────────────── */
 .tabs-wrap {
-  position:relative; z-index:1;
-  display:flex; background:var(--navy2);
-  border-bottom:2px solid rgba(37,99,235,0.2);
-  max-width:500px; margin:0 auto;
+  position: relative; z-index: 1; display: flex;
+  background: var(--navy2); border-bottom: 1px solid rgba(37,99,235,.18);
+  max-width: 500px; margin: 0 auto;
 }
 .tab-btn {
-  flex:1; padding:14px 0;
-  background:none; border:none; cursor:pointer;
-  font-family:'Exo 2',sans-serif; font-weight:700;
-  font-size:0.9rem; color:var(--gray);
-  letter-spacing:1px; transition:all 0.2s;
-  border-bottom:3px solid transparent;
+  flex: 1; padding: 13px 0; background: none; border: none; cursor: pointer;
+  font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: .88rem;
+  color: var(--gray2); letter-spacing: 1px; transition: all .2s;
+  border-bottom: 3px solid transparent;
 }
-.tab-btn.active { color:var(--white); border-bottom-color:var(--accent); }
-.tab-btn.tab-paid.active { color:var(--gold); border-bottom-color:var(--gold); }
+.tab-btn.active          { color: var(--white); border-bottom-color: var(--accent); }
+.tab-btn.tab-paid.active { color: var(--gold);  border-bottom-color: var(--gold); }
 
-/* MAIN */
-main { position:relative; z-index:1; padding:20px 16px 32px; max-width:500px; margin:0 auto; }
+/* ── MAIN ───────────────────────────────────────── */
+main { position: relative; z-index: 1; padding: 18px 14px 28px; max-width: 500px; margin: 0 auto; }
 
-/* CARDS */
-.card-item { margin-bottom:24px; animation:fadeUp 0.4s ease both; }
+/* ── ADS ────────────────────────────────────────── */
+.ad-block {
+  margin: 0 0 18px; border-radius: 12px; overflow: hidden;
+  background: rgba(255,255,255,.03); border: 1px solid rgba(37,99,235,.12);
+}
+.ad-side { display: flex; justify-content: center; margin: 20px 0; opacity: .9; }
+
+/* ── CARDS ──────────────────────────────────────── */
+.card-item { margin-bottom: 20px; animation: fadeUp .38s ease both; }
 @keyframes fadeUp {
-  from { opacity:0; transform:translateY(20px); }
-  to   { opacity:1; transform:translateY(0); }
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .card-image-wrap {
-  background:var(--card-bg); border-radius:20px;
-  overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.4);
-  cursor:pointer; transition:transform 0.2s, box-shadow 0.2s;
-  display:block; text-decoration:none;
-  min-height:200px; position:relative;
+  background: #f1f5f9; border-radius: 18px;
+  overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.38);
+  cursor: pointer; transition: transform .2s, box-shadow .2s;
+  display: block; text-decoration: none; min-height: 190px; position: relative;
 }
-.card-image-wrap:hover { transform:translateY(-3px); box-shadow:0 8px 32px rgba(37,99,235,0.4); }
-.card-image-wrap img {
-  width:100%; display:block;
-  object-fit:cover; min-height:200px; max-height:300px;
-}
+.card-image-wrap:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(37,99,235,.35); }
+.card-image-wrap img { width: 100%; display: block; object-fit: cover; min-height: 190px; max-height: 290px; }
 .card-image-placeholder {
-  width:100%; min-height:200px;
-  display:flex; align-items:center; justify-content:center;
-  background:linear-gradient(135deg,#e2e8f0,#f8fafc);
-  color:#94a3b8; font-size:0.9rem;
+  width: 100%; min-height: 190px; display: flex; align-items: center; justify-content: center;
+  color: #94a3b8; font-size: .88rem; background: linear-gradient(135deg,#dde3ed,#eef1f6);
 }
 .card-badge {
-  position:absolute; top:12px; right:12px;
-  font-weight:800; font-size:0.72rem;
-  padding:4px 10px; border-radius:20px;
-  letter-spacing:1px;
+  position: absolute; top: 11px; right: 11px;
+  font-weight: 800; font-size: .68rem; padding: 3px 9px; border-radius: 18px; letter-spacing: .8px;
 }
-.badge-free { background:linear-gradient(135deg,#059669,var(--green)); color:white; box-shadow:0 2px 8px rgba(16,185,129,0.5); }
-.badge-paid-tag { background:linear-gradient(135deg,#d97706,var(--gold)); color:#1a1a1a; box-shadow:0 2px 8px rgba(245,158,11,0.5); }
+.badge-free     { background: linear-gradient(135deg,#059669,#10b981); color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,.45); }
+.badge-paid-tag { background: linear-gradient(135deg,#d97706,#f59e0b); color: #1a1100; box-shadow: 0 2px 8px rgba(245,158,11,.45); }
+.card-click-count {
+  position: absolute; bottom: 10px; left: 12px;
+  background: rgba(0,0,0,.5); backdrop-filter: blur(4px);
+  color: #fff; font-size: .68rem; padding: 3px 9px; border-radius: 12px;
+  display: flex; align-items: center; gap: 4px;
+}
 
-/* LOCKED CARD */
-.card-locked { position:relative; border-radius:20px; overflow:hidden; min-height:200px; }
+/* ── LOCKED CARD ────────────────────────────────── */
+.card-locked { position: relative; border-radius: 18px; overflow: hidden; min-height: 190px; cursor: pointer; }
 .card-locked-overlay {
-  position:absolute; inset:0;
-  background:rgba(10,22,40,0.72);
-  backdrop-filter:blur(6px);
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center; gap:10px;
-  border-radius:20px;
+  position: absolute; inset: 0;
+  background: rgba(8,18,36,.68); backdrop-filter: blur(7px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 9px; border-radius: 18px;
 }
-.lock-icon { font-size:2rem; }
-.lock-text { color:white; font-weight:700; font-size:0.9rem; text-align:center; padding:0 16px; }
-.lock-price { color:var(--gold); font-weight:900; font-size:1.1rem; font-family:'Orbitron',monospace; }
+.lock-text  { color: #fff; font-weight: 700; font-size: .88rem; text-align: center; padding: 0 14px; }
+.lock-price { color: var(--gold); font-weight: 900; font-size: 1.05rem; font-family: 'Orbitron', monospace; }
 .unlock-btn {
-  background:linear-gradient(135deg,var(--gold),#d97706);
-  border:none; color:#1a1a1a; padding:10px 24px;
-  border-radius:20px; cursor:pointer; font-weight:800;
-  font-family:'Exo 2',sans-serif; font-size:0.9rem;
-  transition:all 0.2s; letter-spacing:1px;
+  background: linear-gradient(135deg, var(--gold), #d97706);
+  border: none; color: #1a1100; padding: 9px 22px; border-radius: 18px;
+  cursor: pointer; font-weight: 800; font-family: 'Exo 2', sans-serif;
+  font-size: .85rem; transition: all .2s; letter-spacing: .8px;
 }
-.unlock-btn:hover { transform:translateY(-2px); box-shadow:0 4px 16px rgba(245,158,11,0.5); }
+.unlock-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(245,158,11,.45); }
 
+/* ── CARD TITLE BOX ─────────────────────────────── */
 .card-title-box {
-  background:var(--title-bg); border-radius:14px;
-  padding:12px 16px; margin-top:8px; cursor:pointer;
-  transition:background 0.2s; border:1px solid rgba(37,99,235,0.25);
+  background: var(--title-bg); border-radius: 13px;
+  padding: 11px 14px; margin-top: 7px; border: 1px solid rgba(37,99,235,.2);
 }
-.card-title-box:hover { background:rgba(37,99,235,0.25); }
-.card-title { font-family:'Exo 2',sans-serif; font-weight:700; color:var(--white); font-size:0.95rem; margin-bottom:4px; }
-.card-desc-preview { color:var(--gray); font-size:0.82rem; }
+.card-title-row   { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card-title       { font-weight: 700; color: var(--white); font-size: .92rem; }
+.card-click-label { color: var(--gray2); font-size: .7rem; display: flex; align-items: center; gap: 3px; white-space: nowrap; flex-shrink: 0; }
+.card-desc-preview { color: var(--gray2); font-size: .79rem; margin-top: 4px; cursor: pointer; }
 .card-desc-full {
-  display:none; color:var(--gray); font-size:0.82rem; line-height:1.5;
-  padding-top:8px; border-top:1px solid rgba(255,255,255,0.1); margin-top:8px;
+  display: none; color: var(--gray); font-size: .79rem; line-height: 1.55;
+  padding-top: 7px; border-top: 1px solid rgba(255,255,255,.08); margin-top: 7px;
 }
-.card-desc-full.open { display:block; }
+.card-desc-full.open { display: block; }
 
-/* PAGINATION */
-.pagination { display:flex; justify-content:center; align-items:center; gap:8px; padding:16px 0; }
+/* ── PAGINATION ─────────────────────────────────── */
+.pagination { display: flex; justify-content: center; align-items: center; gap: 6px; padding: 14px 0; }
 .page-btn {
-  width:36px; height:36px; border-radius:50%;
-  border:1px solid rgba(37,99,235,0.4); background:rgba(37,99,235,0.15);
-  color:white; cursor:pointer; font-weight:600; transition:all 0.2s;
-  display:flex; align-items:center; justify-content:center;
+  min-width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid rgba(37,99,235,.35); background: rgba(37,99,235,.12);
+  color: #fff; cursor: pointer; font-weight: 700; font-size: .85rem;
+  transition: all .2s; display: flex; align-items: center; justify-content: center; padding: 0 6px;
 }
-.page-btn.active { background:var(--accent); border-color:var(--accent); box-shadow:0 2px 12px rgba(37,99,235,0.5); }
-.page-btn:hover { background:rgba(37,99,235,0.4); }
+.page-btn.active { background: var(--accent); border-color: var(--accent); box-shadow: 0 2px 10px rgba(37,99,235,.45); }
+.page-btn:hover  { background: rgba(37,99,235,.35); }
 
-/* COMMENTS */
-.comments-section { margin-top:32px; padding-top:24px; border-top:1px solid rgba(37,99,235,0.3); }
+/* ── COMMENTS SECTION ───────────────────────────── */
+.comments-section { margin-top: 28px; padding-top: 22px; border-top: 1px solid rgba(37,99,235,.22); }
 .section-title {
-  font-family:'Orbitron',monospace; font-size:1rem; font-weight:700;
-  color:var(--white); letter-spacing:2px; margin-bottom:16px;
-  display:flex; align-items:center; gap:8px;
+  font-family: 'Orbitron', monospace; font-size: .92rem; font-weight: 700;
+  color: var(--white); letter-spacing: 2px; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
 }
-.section-title::before { content:''; width:4px; height:20px; background:var(--accent); border-radius:2px; }
+.section-title::before { content: ''; width: 4px; height: 18px; background: var(--accent); border-radius: 2px; }
+
+/* ── COMMENT FORM ───────────────────────────────── */
 .comment-input-area {
-  background:rgba(255,255,255,0.05); border:1px solid rgba(37,99,235,0.3);
-  border-radius:16px; padding:16px; margin-bottom:20px;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(37,99,235,.22);
+  border-radius: 14px; padding: 14px; margin-bottom: 16px;
 }
-.comment-login-prompt { text-align:center; color:var(--gray); font-size:0.9rem; padding:12px; }
+.comment-login-prompt { text-align: center; color: var(--gray); font-size: .88rem; padding: 10px; }
 .comment-login-prompt button {
-  background:var(--accent); border:none; color:white; padding:6px 16px;
-  border-radius:16px; cursor:pointer; margin-left:8px;
-  font-family:'Exo 2',sans-serif; font-weight:600;
+  background: var(--accent); border: none; color: #fff; padding: 6px 14px;
+  border-radius: 14px; cursor: pointer; margin-left: 7px;
+  font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: .82rem;
 }
+.rating-row  { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.rating-label { color: var(--gray); font-size: .8rem; }
+.stars-input { display: flex; gap: 2px; }
+.stars-input span {
+  font-size: 0; width: 18px; height: 18px; cursor: pointer;
+  display: inline-block; position: relative;
+}
+.stars-input span::before {
+  content: ''; display: block; width: 18px; height: 18px;
+  background: var(--gray2);
+  clip-path: polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  transition: background .15s;
+}
+.stars-input span.on::before,
+.stars-input span.hover::before { background: var(--gold); }
+.item-select {
+  background: rgba(255,255,255,.07); border: 1px solid rgba(37,99,235,.3);
+  border-radius: 9px; color: #fff; font-family: 'Exo 2', sans-serif;
+  font-size: .82rem; padding: 6px 10px; outline: none; cursor: pointer;
+}
+.item-select option { background: #0d1f3c; }
 .comment-form textarea {
-  width:100%; background:rgba(255,255,255,0.06);
-  border:1px solid rgba(37,99,235,0.3); border-radius:12px;
-  color:white; padding:12px; font-family:'Exo 2',sans-serif;
-  font-size:0.9rem; resize:vertical; min-height:80px; outline:none;
+  width: 100%; background: rgba(255,255,255,.05); border: 1px solid rgba(37,99,235,.25);
+  border-radius: 10px; color: #fff; padding: 10px 12px;
+  font-family: 'Exo 2', sans-serif; font-size: .88rem; resize: vertical; min-height: 72px; outline: none;
 }
-.comment-form textarea::placeholder { color:var(--gray); }
+.comment-form textarea::placeholder { color: var(--gray2); }
 .comment-submit {
-  margin-top:8px; float:right;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  border:none; color:white; padding:8px 20px; border-radius:20px;
-  cursor:pointer; font-family:'Exo 2',sans-serif; font-weight:600; transition:all 0.2s;
+  margin-top: 8px; float: right;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border: none; color: #fff; padding: 7px 18px; border-radius: 18px;
+  cursor: pointer; font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: .84rem; transition: all .2s;
 }
-.comments-list { clear:both; }
+.comment-submit:hover { transform: translateY(-1px); box-shadow: 0 3px 12px rgba(37,99,235,.4); }
+
+/* ── RATING SUMMARY ─────────────────────────────── */
+.rating-summary {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  padding: 10px 14px; background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.07); border-radius: 12px;
+}
+.rating-avg   { font-size: 1.6rem; font-weight: 900; color: var(--gold); font-family: 'Orbitron', monospace; }
+.rating-stars-row { display: flex; flex-direction: column; gap: 2px; }
+.rating-count { color: var(--gray2); font-size: .75rem; }
+
+/* ── COMMENT ITEM ───────────────────────────────── */
+.comments-list { clear: both; }
 .comment-item {
-  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);
-  border-radius:14px; padding:14px; margin-bottom:12px; animation:fadeUp 0.3s ease;
+  background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.055);
+  border-radius: 13px; padding: 13px; margin-bottom: 11px; animation: fadeUp .3s ease;
 }
-.comment-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.comment-header { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 7px; }
 .comment-avatar {
-  width:32px; height:32px; border-radius:50%;
-  background:linear-gradient(135deg,var(--accent),#7c3aed);
-  display:flex; align-items:center; justify-content:center;
-  font-weight:700; font-size:0.8rem; color:white; flex-shrink:0;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: .75rem; color: #fff; flex-shrink: 0; margin-top: 1px;
 }
-.comment-name { font-weight:700; color:white; font-size:0.88rem; }
-.comment-time { color:var(--gray); font-size:0.75rem; margin-left:auto; }
-.comment-text { color:#cbd5e1; font-size:0.88rem; line-height:1.5; }
+.comment-meta     { flex: 1; min-width: 0; }
+.comment-name     { font-weight: 700; color: #fff; font-size: .85rem; }
+.comment-item-ref { color: var(--accent2); font-size: .72rem; margin-top: 1px; }
+.comment-time     { color: var(--gray2); font-size: .72rem; white-space: nowrap; margin-left: auto; }
+.comment-text     { color: #c8d5e8; font-size: .85rem; line-height: 1.5; margin-left: 39px; }
 
-/* FOOTER */
-footer {
-  position:relative; z-index:1;
-  border-top:1px solid rgba(37,99,235,0.15);
-  padding:24px 16px 40px; text-align:center;
+/* ── STAR DISPLAY ───────────────────────────────── */
+.stars-display { display: flex; gap: 2px; margin-top: 2px; }
+.stars-display span { width: 13px; height: 13px; display: inline-block; }
+.stars-display span::before {
+  content: ''; display: block; width: 13px; height: 13px;
+  background: var(--gray2);
+  clip-path: polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
 }
-.footer-socials { display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; }
-.footer-label { color:rgba(148,163,184,0.5); font-size:0.75rem; letter-spacing:1px; }
+.stars-display span.filled::before { background: var(--gold); }
+.top-comment-badge {
+  display: inline-block; background: linear-gradient(135deg, var(--gold), #d97706);
+  color: #1a1100; font-size: .62rem; font-weight: 800;
+  padding: 2px 7px; border-radius: 10px; margin-left: 6px;
+  letter-spacing: .5px; vertical-align: middle;
+}
+
+/* ── REPLY SYSTEM ───────────────────────────────── */
+.comment-actions { display: flex; align-items: center; gap: 8px; margin-top: 7px; margin-left: 39px; }
+.reply-btn {
+  background: none; border: none; color: var(--gray2); font-size: .75rem;
+  cursor: pointer; font-family: 'Exo 2', sans-serif;
+  padding: 3px 8px; border-radius: 10px; transition: all .2s;
+}
+.reply-btn:hover { background: rgba(37,99,235,.15); color: var(--accent2); }
+.reply-form { margin-top: 8px; margin-left: 39px; display: none; }
+.reply-form.open { display: block; }
+.reply-form textarea {
+  width: 100%; background: rgba(255,255,255,.04);
+  border: 1px solid rgba(37,99,235,.2); border-radius: 9px;
+  color: #fff; padding: 8px 11px; font-family: 'Exo 2', sans-serif;
+  font-size: .82rem; resize: none; height: 60px; outline: none;
+}
+.reply-form textarea::placeholder { color: var(--gray2); }
+.reply-submit {
+  margin-top: 5px; background: rgba(37,99,235,.25);
+  border: 1px solid rgba(37,99,235,.35); color: var(--accent2);
+  padding: 5px 13px; border-radius: 12px; cursor: pointer;
+  font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: .78rem; float: right;
+}
+.replies-wrap { margin-top: 7px; margin-left: 39px; clear: both; }
+.reply-item {
+  background: rgba(255,255,255,.025); border-left: 2px solid rgba(37,99,235,.3);
+  border-radius: 0 8px 8px 0; padding: 8px 11px; margin-bottom: 6px;
+}
+.reply-author { font-weight: 700; color: #fff; font-size: .78rem; }
+.reply-time   { color: var(--gray2); font-size: .68rem; margin-left: 6px; }
+.reply-text   { color: #9db4cc; font-size: .8rem; line-height: 1.45; margin-top: 3px; }
+.show-more-replies {
+  background: none; border: none; color: var(--accent2);
+  font-size: .75rem; cursor: pointer; font-family: 'Exo 2', sans-serif;
+  padding: 3px 0; margin-top: 2px; display: block;
+}
+.load-more-btn {
+  display: block; width: 100%; background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08); color: var(--gray);
+  padding: 10px; border-radius: 12px; cursor: pointer;
+  font-family: 'Exo 2', sans-serif; font-size: .82rem; margin-top: 4px; transition: all .2s;
+}
+.load-more-btn:hover { background: rgba(37,99,235,.1); color: #fff; }
+
+/* ── FOOTER ─────────────────────────────────────── */
+footer { position: relative; z-index: 1; border-top: 1px solid rgba(37,99,235,.13); padding: 20px 16px 36px; text-align: center; }
+.footer-socials { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.footer-label   { color: rgba(148,163,184,.45); font-size: .73rem; letter-spacing: .8px; }
 .social-link {
-  display:flex; align-items:center; justify-content:center;
-  width:36px; height:36px; border-radius:50%;
-  background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
-  transition:all 0.2s; text-decoration:none; color:white;
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09);
+  transition: all .2s; text-decoration: none; color: #fff;
 }
-.social-link:hover { background:rgba(37,99,235,0.2); border-color:var(--accent2); transform:translateY(-2px); }
-.social-link svg { width:17px; height:17px; fill:currentColor; }
-.footer-copy { margin-top:14px; color:rgba(148,163,184,0.25); font-size:0.7rem; letter-spacing:1px; }
+.social-link:hover { background: rgba(37,99,235,.18); border-color: var(--accent2); transform: translateY(-2px); }
+.social-link svg { width: 16px; height: 16px; fill: currentColor; }
+.footer-copy { margin-top: 12px; color: rgba(148,163,184,.22); font-size: .68rem; letter-spacing: .8px; }
 
-/* ADMIN PANEL */
-.admin-panel {
-  display:none; background:var(--navy2);
-  border:1px solid rgba(37,99,235,0.4);
-  border-radius:20px; padding:20px; margin-bottom:24px;
+/* ── ADMIN PANEL ────────────────────────────────── */
+.admin-panel { display: none; background: var(--navy2); border: 1px solid rgba(37,99,235,.35); border-radius: 18px; padding: 18px; margin-bottom: 20px; }
+.admin-panel.active { display: block; }
+.admin-panel h3 { font-family: 'Orbitron', monospace; font-size: .88rem; color: var(--gold); letter-spacing: 2px; margin-bottom: 14px; }
+.admin-form label { color: var(--gray2); font-size: .76rem; display: block; margin-bottom: 3px; }
+.admin-form input,
+.admin-form textarea,
+.admin-form select {
+  width: 100%; padding: 9px 12px; margin-bottom: 9px;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(37,99,235,.3);
+  border-radius: 9px; color: #fff; font-family: 'Exo 2', sans-serif; font-size: .85rem; outline: none;
 }
-.admin-panel.active { display:block; }
-.admin-panel h3 { font-family:'Orbitron',monospace; font-size:0.95rem; color:var(--gold); letter-spacing:2px; margin-bottom:16px; }
-.admin-form input, .admin-form textarea, .admin-form select {
-  width:100%; padding:10px 14px; margin-bottom:10px;
-  background:rgba(255,255,255,0.07); border:1px solid rgba(37,99,235,0.4);
-  border-radius:10px; color:white;
-  font-family:'Exo 2',sans-serif; font-size:0.88rem; outline:none;
-}
-.admin-form select { appearance:none; }
-.admin-form select option { background:#0d1f3c; }
-.admin-form input::placeholder, .admin-form textarea::placeholder { color:var(--gray); }
-.admin-form textarea { min-height:70px; resize:vertical; }
-.admin-form label { color:var(--gray); font-size:0.8rem; display:block; margin-bottom:4px; }
-.price-field { display:none; }
-.admin-submit {
-  background:linear-gradient(135deg,var(--gold),#d97706);
-  border:none; color:#1a1a1a; padding:10px 24px;
-  border-radius:20px; cursor:pointer; font-weight:700;
-  font-family:'Exo 2',sans-serif; font-size:0.9rem; transition:all 0.2s;
-}
-.admin-items-list { margin-top:20px; }
-.admin-item {
-  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
-  border-radius:12px; padding:12px; margin-bottom:10px;
-  display:flex; align-items:center; gap:10px;
-}
-.admin-item-info { flex:1; min-width:0; }
-.admin-item-title { color:white; font-size:0.88rem; font-weight:600; }
-.admin-item-meta { font-size:0.75rem; margin-top:2px; }
-.meta-free { color:var(--green); font-weight:700; }
-.meta-paid { color:var(--gold); font-weight:700; }
-.admin-edit {
-  background:rgba(37,99,235,0.2); border:1px solid rgba(37,99,235,0.3);
-  color:#93c5fd; padding:4px 10px; border-radius:8px; cursor:pointer; font-size:0.75rem; flex-shrink:0;
-}
-.admin-delete {
-  background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.3);
-  color:#f87171; padding:4px 10px; border-radius:8px; cursor:pointer; font-size:0.75rem; flex-shrink:0;
-}
+.admin-form select { appearance: none; cursor: pointer; }
+.admin-form select option { background: #0d1f3c; }
+.admin-form input::placeholder,
+.admin-form textarea::placeholder { color: var(--gray2); }
+.admin-form textarea { min-height: 60px; resize: vertical; }
+.price-field { display: none; }
+.admin-submit { background: linear-gradient(135deg, var(--gold), #d97706); border: none; color: #1a1100; padding: 9px 22px; border-radius: 18px; cursor: pointer; font-weight: 800; font-family: 'Exo 2', sans-serif; font-size: .88rem; transition: all .2s; }
+.admin-submit:hover { box-shadow: 0 3px 14px rgba(245,158,11,.4); }
+.cancel-btn { background: rgba(255,255,255,.07); border: none; color: var(--gray); padding: 9px 16px; border-radius: 18px; cursor: pointer; font-family: 'Exo 2', sans-serif; font-size: .82rem; }
+.admin-items-list { margin-top: 16px; }
+.admin-item { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 10px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.admin-item-info  { flex: 1; min-width: 0; }
+.admin-item-title { color: #fff; font-size: .85rem; font-weight: 600; }
+.admin-item-meta  { font-size: .72rem; margin-top: 2px; }
+.meta-free { color: var(--green); font-weight: 700; }
+.meta-paid { color: var(--gold);  font-weight: 700; }
+.btn-sm  { padding: 4px 9px; border-radius: 7px; cursor: pointer; font-size: .72rem; border: 1px solid; flex-shrink: 0; font-family: 'Exo 2', sans-serif; font-weight: 700; }
+.btn-edit { background: rgba(37,99,235,.15); border-color: rgba(37,99,235,.3); color: #93c5fd; }
+.btn-del  { background: rgba(239,68,68,.15);  border-color: rgba(239,68,68,.3);  color: #f87171; }
 
-/* MODALS */
-.modal-overlay {
-  display:none; position:fixed; inset:0;
-  background:rgba(0,0,0,0.75); z-index:200;
-  align-items:center; justify-content:center;
-}
-.modal-overlay.active { display:flex; }
+/* ── MODALS ─────────────────────────────────────── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.72); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay.active { display: flex; }
 .modal {
-  background:var(--navy2); border:1px solid rgba(37,99,235,0.4);
-  border-radius:24px; padding:32px 28px; width:90%; max-width:380px;
-  box-shadow:0 16px 64px rgba(0,0,0,0.6); animation:fadeUp 0.3s ease; position:relative;
+  background: var(--navy2); border: 1px solid rgba(37,99,235,.38);
+  border-radius: 22px; padding: 28px 24px; width: 92%; max-width: 370px;
+  box-shadow: 0 16px 56px rgba(0,0,0,.55); animation: fadeUp .28s ease; position: relative;
 }
-.modal h2 { font-family:'Orbitron',monospace; font-size:1.1rem; color:white; margin-bottom:20px; text-align:center; letter-spacing:2px; }
-.modal input {
-  width:100%; padding:12px 16px; margin-bottom:12px;
-  background:rgba(255,255,255,0.07); border:1px solid rgba(37,99,235,0.4);
-  border-radius:12px; color:white; font-family:'Exo 2',sans-serif; font-size:0.9rem; outline:none;
-}
-.modal input::placeholder { color:var(--gray); }
-.modal-submit {
-  width:100%; padding:12px;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  border:none; color:white; font-family:'Exo 2',sans-serif;
-  font-weight:700; font-size:1rem; border-radius:12px; cursor:pointer; transition:all 0.2s;
-}
-.modal-close { position:absolute; top:16px; right:20px; font-size:1.4rem; cursor:pointer; color:var(--gray); background:none; border:none; }
-.modal-error { color:#f87171; font-size:0.82rem; margin-bottom:8px; text-align:center; }
+.modal h2 { font-family: 'Orbitron', monospace; font-size: 1rem; color: #fff; margin-bottom: 18px; text-align: center; letter-spacing: 2px; }
+.modal input { width: 100%; padding: 11px 14px; margin-bottom: 10px; background: rgba(255,255,255,.06); border: 1px solid rgba(37,99,235,.35); border-radius: 10px; color: #fff; font-family: 'Exo 2', sans-serif; font-size: .88rem; outline: none; }
+.modal input::placeholder { color: var(--gray2); }
+.modal-submit { width: 100%; padding: 11px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; color: #fff; font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: .95rem; border-radius: 11px; cursor: pointer; transition: all .2s; }
+.modal-close  { position: absolute; top: 14px; right: 18px; font-size: 1.3rem; cursor: pointer; color: var(--gray2); background: none; border: none; line-height: 1; }
+.modal-error  { color: #f87171; font-size: .78rem; margin-bottom: 7px; text-align: center; }
+.pay-item-name { color: #fff; font-weight: 700; font-size: .95rem; margin-bottom: 4px; }
+.pay-price { color: var(--gold); font-size: 1.35rem; font-weight: 900; font-family: 'Orbitron', monospace; margin-bottom: 18px; }
+.pay-btn { width: 100%; padding: 13px; background: linear-gradient(135deg, var(--gold), #d97706); border: none; color: #1a1100; font-family: 'Exo 2', sans-serif; font-weight: 900; font-size: .95rem; border-radius: 13px; cursor: pointer; transition: all .2s; letter-spacing: .8px; }
+.pay-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 18px rgba(245,158,11,.45); }
+.pay-note { color: var(--gray2); font-size: .74rem; text-align: center; margin-top: 9px; line-height: 1.5; }
 
-/* PAYMENT MODAL */
-.pay-item-name { color:white; font-weight:700; font-size:1rem; margin-bottom:6px; }
-.pay-price { color:var(--gold); font-size:1.4rem; font-weight:900; font-family:'Orbitron',monospace; margin-bottom:20px; }
-.pay-btn {
-  width:100%; padding:14px;
-  background:linear-gradient(135deg,var(--gold),#d97706);
-  border:none; color:#1a1a1a; font-family:'Exo 2',sans-serif;
-  font-weight:800; font-size:1rem; border-radius:14px;
-  cursor:pointer; transition:all 0.2s; letter-spacing:1px;
-}
-.pay-btn:hover { transform:translateY(-1px); box-shadow:0 4px 20px rgba(245,158,11,0.5); }
-.pay-note { color:var(--gray); font-size:0.78rem; text-align:center; margin-top:10px; line-height:1.5; }
-
-.loading { text-align:center; padding:40px; color:var(--gray); }
-.spinner {
-  width:32px; height:32px; border:3px solid rgba(37,99,235,0.3);
-  border-top-color:var(--accent2); border-radius:50%;
-  animation:spin 0.8s linear infinite; margin:0 auto 12px;
-}
-@keyframes spin { to { transform:rotate(360deg); } }
-.empty-state { text-align:center; padding:40px 20px; color:var(--gray); font-size:0.9rem; }
-
-.ad-wrap { margin:16px 0; display:flex; justify-content:center; min-height:50px; }
+/* ── MISC ───────────────────────────────────────── */
+.loading { text-align: center; padding: 36px; color: var(--gray); }
+.spinner { width: 30px; height: 30px; border: 3px solid rgba(37,99,235,.25); border-top-color: var(--accent2); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 10px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty-state { text-align: center; padding: 36px 16px; color: var(--gray2); font-size: .88rem; }
 </style>
 </head>
 <body>
 
+<!-- ── HEADER ──────────────────────────────────────────── -->
 <header>
   <div class="header-left">
     <img class="logo-img" src="biragm.png" alt="BIRA GM"
-      onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 50 50%22><circle cx=%2225%22 cy=%2225%22 r=%2225%22 fill=%22%231a3a6e%22/><text x=%2250%25%22 y=%2255%25%22 font-size=%2214%22 text-anchor=%22middle%22 fill=%22white%22 dominant-baseline=%22middle%22>BG</text></svg>'">
+      onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 50 50%22><circle cx=%2225%22 cy=%2225%22 r=%2225%22 fill=%22%231a3a6e%22/><text x=%2250%25%22 y=%2256%25%22 font-size=%2212%22 text-anchor=%22middle%22 fill=%22white%22 dominant-baseline=%22middle%22 font-weight=%22bold%22>BG</text></svg>'">
     <span class="logo-text">BIRA GM</span>
   </div>
   <div class="header-right">
-    <button class="search-btn" onclick="toggleSearch()">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <button class="icon-btn" onclick="toggleSearch()">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
     </button>
     <div id="authArea"></div>
   </div>
 </header>
 
+<!-- ── SEARCH ──────────────────────────────────────────── -->
 <div class="search-bar" id="searchBar">
   <input type="text" id="searchInput" placeholder="Cari judul..." oninput="filterCards()">
 </div>
 
+<!-- ── TABS ────────────────────────────────────────────── -->
 <div class="tabs-wrap">
-  <button class="tab-btn active" id="tabFree" onclick="switchTab('free')">GRATIS</button>
+  <button class="tab-btn active"   id="tabFree" onclick="switchTab('free')">GRATIS</button>
   <button class="tab-btn tab-paid" id="tabPaid" onclick="switchTab('paid')">BERBAYAR</button>
 </div>
 
+<!-- ── MAIN ────────────────────────────────────────────── -->
 <main>
-  <!-- ADMIN PANEL -->
+
+  <!-- Admin Panel -->
   <div class="admin-panel" id="adminPanel">
     <h3>ADMIN PANEL</h3>
     <div class="admin-form">
       <input type="hidden" id="editId">
       <label>URL Gambar *</label>
-      <input type="url" id="imgUrl" placeholder="https://...gambar.jpg">
-      <label>URL Link (klik gambar) *</label>
+      <input type="url" id="imgUrl" placeholder="https://...">
+      <label>URL Link *</label>
       <input type="url" id="linkUrl" placeholder="https://...">
       <label>Judul *</label>
       <input type="text" id="titleInput" placeholder="Judul konten">
       <label>Deskripsi (opsional)</label>
       <textarea id="descInput" placeholder="Deskripsi..."></textarea>
-      <label>Tipe Konten</label>
+      <label>Tipe</label>
       <select id="typeInput" onchange="togglePriceField()">
         <option value="free">Gratis</option>
         <option value="paid">Berbayar</option>
       </select>
       <div class="price-field" id="priceField">
         <label>Harga (Rupiah)</label>
-        <input type="number" id="priceInput" placeholder="Contoh: 15000" min="1000">
+        <input type="text" id="priceInput" placeholder="Rp 0" oninput="formatPriceInput(this)" inputmode="numeric">
       </div>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+      <div style="display:flex;gap:8px;align-items:center;margin-top:2px">
         <button class="admin-submit" onclick="saveItem()">Simpan</button>
-        <button id="cancelEdit" style="display:none;background:rgba(255,255,255,0.1);border:none;color:#94a3b8;padding:10px 16px;border-radius:20px;cursor:pointer;font-family:'Exo 2',sans-serif;" onclick="cancelEditFn()">Batal</button>
+        <button id="cancelEdit" class="cancel-btn" style="display:none" onclick="cancelEditFn()">Batal</button>
       </div>
     </div>
     <div class="admin-items-list" id="adminItemsList"></div>
   </div>
 
-  <!-- Native Banner Ad -->
-  <div class="ad-wrap">
-    <div>
-      <script async="async" data-cfasync="false" src="https://upholdbrilliancerecast.com/0a4bfa865cb678c32078898b80923227/invoke.js"></script>
-      <div id="container-0a4bfa865cb678c32078898b80923227"></div>
-    </div>
+  <!-- Ad: Native Banner -->
+  <div class="ad-block">
+    <script async="async" data-cfasync="false" src="https://upholdbrilliancerecast.com/0a4bfa865cb678c32078898b80923227/invoke.js"></script>
+    <div id="container-0a4bfa865cb678c32078898b80923227"></div>
   </div>
 
-  <!-- CARDS LIST -->
+  <!-- Cards -->
   <div id="cardsList">
     <div class="loading"><div class="spinner"></div><div>Memuat...</div></div>
   </div>
 
-  <!-- PAGINATION -->
+  <!-- Pagination -->
   <div class="pagination" id="pagination"></div>
 
-  <!-- Banner 160x300 -->
-  <div class="ad-wrap">
+  <!-- Ad: Banner 160x300 -->
+  <div class="ad-side">
     <div>
       <script>
-        atOptions = {
-          'key' : '0822be437092656f680abd3d02df8b2e',
-          'format' : 'iframe',
-          'height' : 300,
-          'width' : 160,
-          'params' : {}
-        };
+        atOptions = { 'key':'0822be437092656f680abd3d02df8b2e','format':'iframe','height':300,'width':160,'params':{} };
       </script>
       <script src="https://upholdbrilliancerecast.com/0822be437092656f680abd3d02df8b2e/invoke.js"></script>
     </div>
   </div>
 
-  <!-- COMMENTS -->
+  <!-- Comments -->
   <div class="comments-section">
-    <div class="section-title">KOMENTAR</div>
+    <div class="section-title">ULASAN</div>
     <div class="comment-input-area" id="commentInputArea"></div>
+    <div id="ratingSummary"></div>
     <div class="comments-list" id="commentsList">
       <div class="loading"><div class="spinner"></div></div>
     </div>
   </div>
+
 </main>
 
+<!-- ── FOOTER ──────────────────────────────────────────── -->
 <footer>
   <div class="footer-socials">
     <span class="footer-label">support saya:</span>
@@ -482,406 +540,47 @@ footer {
       <svg viewBox="0 0 24 24"><path d="M19.6 3.3A4.8 4.8 0 0 1 14.8 0h-3.5v16.4a2.9 2.9 0 1 1-2-2.7V10a6.4 6.4 0 1 0 5.5 6.3V8.2a8.2 8.2 0 0 0 4.8 1.5V6.3a4.8 4.8 0 0 1-3-.9z"/></svg>
     </a>
   </div>
-  <div class="footer-copy">© 2025 BIRA GM</div>
+  <div class="footer-copy">© 2026 BIRA GM</div>
 </footer>
 
-<!-- AUTH MODAL -->
+<!-- ── AUTH MODAL ──────────────────────────────────────── -->
 <div class="modal-overlay" id="authModal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">✕</button>
     <h2>MASUK</h2>
-    <div style="color:var(--gray);font-size:0.82rem;text-align:center;margin-bottom:16px;line-height:1.5;">Masukkan email kamu. Kami kirimkan link masuk — tanpa password.</div>
+    <div style="color:var(--gray2);font-size:.8rem;text-align:center;margin-bottom:14px;line-height:1.5">
+      Masukkan email kamu — kami kirimkan link masuk tanpa password.
+    </div>
     <div class="modal-error" id="modalError"></div>
     <div id="modalStep1">
-      <input type="text" id="authName" placeholder="Nama tampilan">
+      <input type="text"  id="authName"  placeholder="Nama tampilan">
       <input type="email" id="authEmail" placeholder="Email kamu">
       <button class="modal-submit" onclick="handleSendLink()">Kirim Magic Link</button>
     </div>
-    <div id="modalStep2" style="display:none;text-align:center;">
-      <div style="font-size:2.5rem;margin-bottom:12px;">📬</div>
-      <div style="color:white;font-weight:700;margin-bottom:8px;">Cek emailmu!</div>
-      <div style="color:var(--gray);font-size:0.85rem;line-height:1.5;" id="sentToText"></div>
-      <button class="modal-submit" style="margin-top:16px;" onclick="resetModal()">Kirim ulang / ganti email</button>
+    <div id="modalStep2" style="display:none;text-align:center">
+      <div style="font-size:2.2rem;margin-bottom:10px">📬</div>
+      <div style="color:#fff;font-weight:700;margin-bottom:7px">Cek emailmu!</div>
+      <div style="color:var(--gray2);font-size:.82rem;line-height:1.5" id="sentToText"></div>
+      <button class="modal-submit" style="margin-top:14px" onclick="resetModal()">Kirim ulang</button>
     </div>
   </div>
 </div>
 
-<!-- PAYMENT MODAL -->
+<!-- ── PAYMENT MODAL ───────────────────────────────────── -->
 <div class="modal-overlay" id="payModal">
   <div class="modal">
     <button class="modal-close" onclick="closePayModal()">✕</button>
     <h2>BELI AKSES</h2>
     <div class="pay-item-name" id="payItemTitle"></div>
-    <div class="pay-price" id="payItemPrice"></div>
+    <div class="pay-price"     id="payItemPrice"></div>
     <button class="pay-btn" onclick="startPayment()">Bayar Sekarang</button>
-    <div class="pay-note">Pembayaran aman via Midtrans. Setelah berhasil, konten langsung terbuka.</div>
+    <div class="pay-note">Pembayaran aman via Midtrans.<br>Setelah berhasil, konten langsung terbuka.</div>
   </div>
 </div>
 
-<!-- MIDTRANS -->
+<!-- ── SCRIPTS ─────────────────────────────────────────── -->
 <script src="https://app.midtrans.com/snap/snap.js" data-client-key="Mid-client-hMgGNF22it0OkQU5"></script>
+<script type="module" src="data.js"></script>
 
-<!-- FIREBASE -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCJUDdgiyFOnZzpPhhtFakejKny2oSpxJ8",
-  authDomain: "biragm-website.firebaseapp.com",
-  projectId: "biragm-website",
-  storageBucket: "biragm-website.firebasestorage.app",
-  messagingSenderId: "617255162677",
-  appId: "1:617255162677:web:97f32fd4b61d45ca61b27c",
-  databaseURL: "https://biragm-website-default-rtdb.asia-southeast1.firebasedatabase.app/"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
-
-const ADMIN_EMAIL = "biraarafah2011@gmail.com";
-const ITEMS_PER_PAGE = 5;
-
-let allItems = [];
-let filteredItems = [];
-let currentPage = 1;
-let currentUser = null;
-let currentTab = 'free';
-let unlockedItems = new Set();
-let payingItem = null;
-
-// AUTH
-onAuthStateChanged(auth, user => {
-  currentUser = user;
-  renderAuthArea();
-  renderCommentInput();
-  if (user) {
-    onValue(ref(db, 'unlocked/' + user.uid), snap => {
-      const data = snap.val();
-      unlockedItems = data ? new Set(Object.keys(data)) : new Set();
-      renderCards();
-    });
-    if (user.email === ADMIN_EMAIL) {
-      document.getElementById('adminPanel').classList.add('active');
-    }
-  } else {
-    unlockedItems = new Set();
-    document.getElementById('adminPanel').classList.remove('active');
-    renderCards();
-  }
-});
-
-function renderAuthArea() {
-  const area = document.getElementById('authArea');
-  if (currentUser) {
-    const name = currentUser.displayName || currentUser.email.split('@')[0];
-    area.innerHTML = `<div class="user-info"><div class="user-avatar">${name[0].toUpperCase()}</div><button class="logout-btn" onclick="window._logout()">Keluar</button></div>`;
-  } else {
-    area.innerHTML = `<button class="auth-btn" onclick="window._openModal()">Masuk</button>`;
-  }
-}
-
-window._logout = () => signOut(auth);
-window._openModal = () => {
-  document.getElementById('authModal').classList.add('active');
-  document.getElementById('modalError').textContent = '';
-};
-
-// ITEMS
-const itemsRef = ref(db, 'items');
-onValue(itemsRef, snap => {
-  const data = snap.val();
-  allItems = data ? Object.entries(data).map(([id,v]) => ({id,...v})).reverse() : [];
-  applyFilter();
-  if (currentUser && currentUser.email === ADMIN_EMAIL) loadAdminList();
-});
-
-function applyFilter() {
-  const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
-  filteredItems = allItems.filter(i => {
-    const matchTab = currentTab === 'free' ? i.type !== 'paid' : i.type === 'paid';
-    return matchTab && (!q || i.title.toLowerCase().includes(q));
-  });
-  currentPage = 1;
-  renderCards();
-  renderPagination();
-}
-
-function renderCards() {
-  const container = document.getElementById('cardsList');
-  if (filteredItems.length === 0) {
-    container.innerHTML = `<div class="empty-state">Belum ada konten di tab ini.</div>`;
-    return;
-  }
-  const start = (currentPage - 1) * ITEMS_PER_PAGE;
-  const pageItems = filteredItems.slice(start, start + ITEMS_PER_PAGE);
-
-  container.innerHTML = pageItems.map((item, i) => {
-    const isPaid = item.type === 'paid';
-    const isAdmin = currentUser && currentUser.email === ADMIN_EMAIL;
-    const isUnlocked = !isPaid || unlockedItems.has(item.id) || isAdmin;
-    const priceStr = 'Rp ' + Number(item.price || 0).toLocaleString('id-ID');
-
-    if (isPaid && !isUnlocked) {
-      return `<div class="card-item" style="animation-delay:${i*0.07}s">
-        <div class="card-locked">
-          ${item.imgUrl
-            ? `<img src="${esc(item.imgUrl)}" style="width:100%;display:block;object-fit:cover;min-height:200px;max-height:300px;border-radius:20px;filter:blur(5px);" alt="">`
-            : `<div style="min-height:200px;background:linear-gradient(135deg,#1e3a5f,#0d1f3c);border-radius:20px;"></div>`}
-          <div class="card-locked-overlay">
-            <div class="lock-icon">🔒</div>
-            <div class="lock-text">${esc(item.title)}</div>
-            <div class="lock-price">${priceStr}</div>
-            <button class="unlock-btn" onclick="window._openPayModal('${item.id}','${esc(item.title)}',${item.price||0})">Beli Akses</button>
-          </div>
-        </div>
-      </div>`;
-    }
-
-    return `<div class="card-item" style="animation-delay:${i*0.07}s">
-      <a class="card-image-wrap" href="${esc(item.linkUrl||'#')}" target="_blank" rel="noopener">
-        ${item.imgUrl ? `<img src="${esc(item.imgUrl)}" alt="${esc(item.title)}" loading="lazy">` : `<div class="card-image-placeholder">Tidak ada gambar</div>`}
-        <div class="card-badge ${isPaid ? 'badge-paid-tag' : 'badge-free'}">${isPaid ? 'PREMIUM' : 'GRATIS'}</div>
-      </a>
-      <div class="card-title-box" onclick="toggleDesc('${item.id}')">
-        <div class="card-title">${esc(item.title)}</div>
-        ${item.desc ? `<div class="card-desc-preview" id="prev-${item.id}">Tap untuk lihat deskripsi</div><div class="card-desc-full" id="desc-${item.id}">${esc(item.desc)}</div>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-window.toggleDesc = (id) => {
-  const el = document.getElementById('desc-' + id);
-  const prev = document.getElementById('prev-' + id);
-  if (!el) return;
-  el.classList.toggle('open');
-  if (prev) prev.style.display = el.classList.contains('open') ? 'none' : 'block';
-};
-
-function renderPagination() {
-  const total = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
-  const pg = document.getElementById('pagination');
-  if (total <= 1) { pg.innerHTML = ''; return; }
-  let html = '';
-  if (currentPage > 1) html += `<button class="page-btn" onclick="window._goPage(${currentPage-1})">‹</button>`;
-  for (let i = 1; i <= total; i++) html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="window._goPage(${i})">${i}</button>`;
-  if (currentPage < total) html += `<button class="page-btn" onclick="window._goPage(${currentPage+1})">›</button>`;
-  pg.innerHTML = html;
-}
-
-window._goPage = (p) => { currentPage = p; renderCards(); renderPagination(); window.scrollTo({top:0,behavior:'smooth'}); };
-window.switchTab = (tab) => {
-  currentTab = tab;
-  document.getElementById('tabFree').classList.toggle('active', tab === 'free');
-  document.getElementById('tabPaid').classList.toggle('active', tab === 'paid');
-  applyFilter();
-};
-window.filterCards = () => applyFilter();
-window.toggleSearch = () => {
-  document.getElementById('searchBar').classList.toggle('active');
-  if (document.getElementById('searchBar').classList.contains('active')) document.getElementById('searchInput').focus();
-};
-
-// ADMIN
-window.togglePriceField = () => {
-  document.getElementById('priceField').style.display = document.getElementById('typeInput').value === 'paid' ? 'block' : 'none';
-};
-
-window.saveItem = async () => {
-  const imgUrl = document.getElementById('imgUrl').value.trim();
-  const linkUrl = document.getElementById('linkUrl').value.trim();
-  const title = document.getElementById('titleInput').value.trim();
-  const desc = document.getElementById('descInput').value.trim();
-  const type = document.getElementById('typeInput').value;
-  const price = type === 'paid' ? Number(document.getElementById('priceInput').value) || 0 : 0;
-  const editId = document.getElementById('editId').value;
-  if (!imgUrl || !linkUrl || !title) { alert('URL Gambar, URL Link, dan Judul wajib diisi!'); return; }
-  const data = { imgUrl, linkUrl, title, desc, type, price, createdAt: Date.now() };
-  if (editId) { await set(ref(db, 'items/' + editId), data); cancelEditFn(); }
-  else { await push(itemsRef, data); clearAdminForm(); }
-};
-
-window.cancelEditFn = () => {
-  document.getElementById('editId').value = '';
-  document.getElementById('cancelEdit').style.display = 'none';
-  clearAdminForm();
-};
-
-function clearAdminForm() {
-  ['imgUrl','linkUrl','titleInput','descInput','priceInput'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('editId').value = '';
-  document.getElementById('typeInput').value = 'free';
-  document.getElementById('priceField').style.display = 'none';
-}
-
-function loadAdminList() {
-  const list = document.getElementById('adminItemsList');
-  if (!allItems.length) { list.innerHTML = '<div style="color:var(--gray);font-size:0.83rem;margin-top:8px;">Belum ada item.</div>'; return; }
-  list.innerHTML = `<div style="color:var(--gold);font-size:0.8rem;letter-spacing:1px;margin-bottom:8px;font-weight:700;">DAFTAR ITEM (${allItems.length})</div>` +
-    allItems.map(item => `<div class="admin-item">
-      <div class="admin-item-info">
-        <div class="admin-item-title">${esc(item.title)}</div>
-        <div class="admin-item-meta">${item.type==='paid' ? `<span class="meta-paid">BERBAYAR — Rp ${Number(item.price||0).toLocaleString('id-ID')}</span>` : `<span class="meta-free">GRATIS</span>`}</div>
-      </div>
-      <button class="admin-edit" onclick="window._editItem('${item.id}')">Edit</button>
-      <button class="admin-delete" onclick="window._deleteItem('${item.id}')">Hapus</button>
-    </div>`).join('');
-}
-
-window._editItem = (id) => {
-  const item = allItems.find(i => i.id === id);
-  if (!item) return;
-  document.getElementById('editId').value = id;
-  document.getElementById('imgUrl').value = item.imgUrl||'';
-  document.getElementById('linkUrl').value = item.linkUrl||'';
-  document.getElementById('titleInput').value = item.title||'';
-  document.getElementById('descInput').value = item.desc||'';
-  document.getElementById('typeInput').value = item.type||'free';
-  document.getElementById('priceInput').value = item.price||'';
-  document.getElementById('priceField').style.display = item.type==='paid' ? 'block' : 'none';
-  document.getElementById('cancelEdit').style.display = 'inline-block';
-  document.getElementById('adminPanel').scrollIntoView({behavior:'smooth'});
-};
-
-window._deleteItem = async (id) => { if (confirm('Hapus item ini?')) await remove(ref(db, 'items/' + id)); };
-
-// PAYMENT
-window._openPayModal = (id, title, price) => {
-  if (!currentUser) { window._openModal(); return; }
-  payingItem = { id, title, price };
-  document.getElementById('payItemTitle').textContent = title;
-  document.getElementById('payItemPrice').textContent = 'Rp ' + Number(price).toLocaleString('id-ID');
-  document.getElementById('payModal').classList.add('active');
-};
-
-window.closePayModal = () => { document.getElementById('payModal').classList.remove('active'); payingItem = null; };
-
-window.startPayment = async () => {
-  if (!payingItem || !currentUser) return;
-  const orderId = 'biragm-' + payingItem.id.slice(-6) + '-' + Date.now();
-  const name = currentUser.displayName || currentUser.email.split('@')[0];
-  const params = {
-    transaction_details: { order_id: orderId, gross_amount: Number(payingItem.price) },
-    customer_details: { first_name: name, email: currentUser.email },
-    item_details: [{ id: payingItem.id, price: Number(payingItem.price), quantity: 1, name: payingItem.title }]
-  };
-  try {
-    const res = await fetch('https://app.midtrans.com/snap/v1/transactions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Basic ' + btoa('Mid-server-UTDNLi0Xs3UbgRmaxU1nA7_:') },
-      body: JSON.stringify(params)
-    });
-    const data = await res.json();
-    if (!data.token) { alert('Gagal memproses pembayaran. Coba lagi.'); return; }
-    closePayModal();
-    window.snap.pay(data.token, {
-      onSuccess: async (result) => {
-        await set(ref(db, 'unlocked/' + currentUser.uid + '/' + payingItem.id), { orderId: result.order_id, paidAt: Date.now(), amount: payingItem.price });
-        alert('Pembayaran berhasil! Konten sudah terbuka.');
-      },
-      onPending: () => alert('Menunggu konfirmasi pembayaran.'),
-      onError: () => alert('Pembayaran gagal, silakan coba lagi.'),
-      onClose: () => {}
-    });
-  } catch(e) { alert('Error: ' + e.message); }
-};
-
-// COMMENTS
-const commentsRef = ref(db, 'comments');
-
-function renderCommentInput() {
-  const area = document.getElementById('commentInputArea');
-  if (currentUser) {
-    area.innerHTML = `<div class="comment-form"><textarea id="commentText" placeholder="Tulis komentar..."></textarea><button class="comment-submit" onclick="window._submitComment()">Kirim</button></div>`;
-  } else {
-    area.innerHTML = `<div class="comment-login-prompt">Masuk untuk berkomentar <button onclick="window._openModal()">Masuk</button></div>`;
-  }
-}
-
-onValue(commentsRef, snap => {
-  const data = snap.val();
-  const comments = data ? Object.entries(data).map(([id,v]) => ({id,...v})).reverse() : [];
-  const list = document.getElementById('commentsList');
-  if (!comments.length) { list.innerHTML = '<div style="color:var(--gray);text-align:center;padding:20px;font-size:0.88rem;">Belum ada komentar.</div>'; return; }
-  list.innerHTML = comments.map(c => `<div class="comment-item">
-    <div class="comment-header">
-      <div class="comment-avatar">${(c.name||'?')[0].toUpperCase()}</div>
-      <div><div class="comment-name">${esc(c.name||'Anonim')}</div></div>
-      <div class="comment-time">${timeAgo(c.createdAt)}</div>
-    </div>
-    <div class="comment-text">${esc(c.text)}</div>
-  </div>`).join('');
-});
-
-window._submitComment = async () => {
-  if (!currentUser) return;
-  const text = document.getElementById('commentText').value.trim();
-  if (!text) return;
-  const name = currentUser.displayName || currentUser.email.split('@')[0];
-  await push(commentsRef, { text, name, uid: currentUser.uid, email: currentUser.email, createdAt: Date.now() });
-  document.getElementById('commentText').value = '';
-};
-
-// MAGIC LINK AUTH
-const ACTION_CODE_SETTINGS = { url: 'https://biragm-website.netlify.app/', handleCodeInApp: true };
-
-window.closeModal = () => { document.getElementById('authModal').classList.remove('active'); document.getElementById('modalError').textContent = ''; };
-window.resetModal = () => { document.getElementById('modalStep1').style.display='block'; document.getElementById('modalStep2').style.display='none'; document.getElementById('modalError').textContent=''; };
-
-window.handleSendLink = async () => {
-  const email = document.getElementById('authEmail').value.trim();
-  const name = document.getElementById('authName').value.trim();
-  const errEl = document.getElementById('modalError');
-  errEl.textContent = '';
-  if (!name) { errEl.textContent = 'Masukkan nama tampilan dulu!'; return; }
-  if (!email) { errEl.textContent = 'Masukkan email dulu!'; return; }
-  try {
-    localStorage.setItem('emailForSignIn', email);
-    localStorage.setItem('nameForSignIn', name);
-    await sendSignInLinkToEmail(auth, email, ACTION_CODE_SETTINGS);
-    document.getElementById('modalStep1').style.display = 'none';
-    document.getElementById('modalStep2').style.display = 'block';
-    document.getElementById('sentToText').textContent = `Link dikirim ke ${email}. Cek inbox atau folder spam. Link berlaku 1 jam.`;
-  } catch(e) {
-    const msgs = { 'auth/invalid-email':'Format email tidak valid.', 'auth/too-many-requests':'Terlalu banyak percobaan.', 'auth/operation-not-allowed':'Email Link belum diaktifkan di Firebase Console.' };
-    errEl.textContent = msgs[e.code] || e.message;
-  }
-};
-
-if (isSignInWithEmailLink(auth, window.location.href)) {
-  let email = localStorage.getItem('emailForSignIn');
-  let name = localStorage.getItem('nameForSignIn');
-  if (!email) email = window.prompt('Konfirmasi emailmu:');
-  if (email) {
-    signInWithEmailLink(auth, email, window.location.href).then(async result => {
-      localStorage.removeItem('emailForSignIn');
-      if (name && !result.user.displayName) { await updateProfile(result.user, { displayName: name }); localStorage.removeItem('nameForSignIn'); }
-      window.history.replaceState({}, document.title, '/');
-    }).catch(e => console.error('Magic link error:', e));
-  }
-}
-
-// UTILS
-function esc(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function timeAgo(ts) {
-  const diff = Date.now() - ts, m = Math.floor(diff/60000);
-  if (m < 1) return 'baru saja';
-  if (m < 60) return m + ' menit lalu';
-  const h = Math.floor(m/60);
-  if (h < 24) return h + ' jam lalu';
-  const d = Math.floor(h/24);
-  if (d < 30) return d + ' hari lalu';
-  return new Date(ts).toLocaleDateString('id-ID');
-}
-
-document.getElementById('authModal').addEventListener('click', e => { if (e.target === document.getElementById('authModal')) closeModal(); });
-document.getElementById('payModal').addEventListener('click', e => { if (e.target === document.getElementById('payModal')) closePayModal(); });
-</script>
 </body>
 </html>
