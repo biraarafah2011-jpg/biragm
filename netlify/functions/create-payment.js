@@ -10,7 +10,7 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body);
-    const auth = Buffer.from("Mid-server-UTDNLi0Xs3UbgRmaxU1nA7_:").toString("base64");
+    const auth = Buffer.from("Mid-server-UTDNLi0Xs3UbgRmaxU1nA7_b:").toString("base64");
 
     const result = await new Promise((resolve, reject) => {
       const data    = JSON.stringify(body);
