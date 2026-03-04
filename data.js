@@ -1,5 +1,6 @@
 // ─────────────────────────────────────────────────────────────
-//  data.js  —  BIRA GM  —  Firebase logic & all app behaviour
+//  data.js  —  BIRA GM
+//  Beli tanpa login — unlock disimpan selamanya by device key
 // ─────────────────────────────────────────────────────────────
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -11,7 +12,7 @@ import {
   getDatabase, ref, push, onValue, remove, set, get, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// ── CONFIG ───────────────────────────────────────────────────
+// ── CONFIG ────────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey:            "AIzaSyCJUDdgiyFOnZzpPhhtFakejKny2oSpxJ8",
   authDomain:        "biragm-website.firebaseapp.com",
@@ -22,28 +23,68 @@ const firebaseConfig = {
   databaseURL:       "https://biragm-website-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
 
-const ADMIN_EMAIL    = "biraarafah2011@gmail.com";
-const ITEMS_PER_PAGE = 5;
-const SHOWN_COMMENTS = 3;
-const ACTION_CODE    = { url: "https://biragm-website.netlify.app/", handleCodeInApp: true };
+const ADMIN_EMAIL         = "biraarafah2011@gmail.com";
+const ITEMS_PER_PAGE      = 5;
+const SHOWN_COMMENTS      = 3;
+const ACTION_CODE         = { url: "https://biragm-website.netlify.app/", handleCodeInApp: true };
 const MIDTRANS_SERVER_KEY = "Mid-server-UTDNLi0Xs3UbgRmaxU1nA7_";
 
-// ── INIT ─────────────────────────────────────────────────────
+// ── INIT ──────────────────────────────────────────────────────
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getDatabase(app);
 
-// ── STATE ────────────────────────────────────────────────────
-let allItems      = [];
-let filteredItems = [];
-let currentPage   = 1;
-let currentUser   = null;
-let currentTab    = "free";
-let unlockedItems = new Set();
-let payingItem    = null;
-let allComments   = [];
-let selectedStar  = 0;
+// ── STATE ─────────────────────────────────────────────────────
+let allItems       = [];
+let filteredItems  = [];
+let currentPage    = 1;
+let currentUser    = null;
+let currentTab     = "free";
+let unlockedItems  = new Set(); // gabungan dari login + device
+let payingItem     = null;
+let allComments    = [];
+let selectedStar   = 0;
 let selectedItemId = "";
+
+// ═════════════════════════════════════════════════════════════
+//  DEVICE KEY  — pengganti login untuk menyimpan unlock
+//  Disimpan di localStorage, tidak hilang kecuali clear browser
+// ═════════════════════════════════════════════════════════════
+function getDeviceKey() {
+  let key = localStorage.getItem("biragm_device_key");
+  if (!key) {
+    // buat key unik permanen untuk perangkat ini
+    key = "dev_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem("biragm_device_key", key);
+  }
+  return key;
+}
+
+const DEVICE_KEY = getDeviceKey();
+
+// Muat unlock dari Firebase berdasarkan device key
+async function loadDeviceUnlocks() {
+  try {
+    const snap = await get(ref(db, "device_unlocked/" + DEVICE_KEY));
+    const data = snap.val();
+    if (data) {
+      Object.keys(data).forEach(id => unlockedItems.add(id));
+    }
+  } catch (e) {
+    console.error("loadDeviceUnlocks:", e);
+  }
+}
+
+// Simpan unlock ke Firebase berdasarkan device key (selamanya)
+async function saveDeviceUnlock(itemId, orderId, amount) {
+  await set(ref(db, "device_unlocked/" + DEVICE_KEY + "/" + itemId), {
+    orderId, amount, paidAt: Date.now()
+  });
+  unlockedItems.add(itemId);
+}
+
+// Inisialisasi device unlocks saat halaman load
+loadDeviceUnlocks().then(() => renderCards());
 
 // ═════════════════════════════════════════════════════════════
 //  UTILS
@@ -52,18 +93,18 @@ function esc(s) {
   if (!s) return "";
   return String(s)
     .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/</g,  "&lt;")
+    .replace(/>/g,  "&gt;")
+    .replace(/"/g,  "&quot;");
 }
 
 function timeAgo(ts) {
-  const d = Date.now() - ts;
-  const m = Math.floor(d / 60000);
-  if (m < 1)  return "baru saja";
-  if (m < 60) return m + " mnt lalu";
-  const h = Math.floor(m / 60);
-  if (h < 24) return h + " jam lalu";
+  const d  = Date.now() - ts;
+  const m  = Math.floor(d / 60000);
+  if (m < 1)   return "baru saja";
+  if (m < 60)  return m + " mnt lalu";
+  const h  = Math.floor(m / 60);
+  if (h < 24)  return h + " jam lalu";
   const dy = Math.floor(h / 24);
   if (dy < 30) return dy + " hari lalu";
   return new Date(ts).toLocaleDateString("id-ID");
@@ -73,12 +114,12 @@ function starsHtml(rating, size = 13) {
   rating = Math.round(rating || 0);
   return `<div class="stars-display">
     ${[1,2,3,4,5].map(i =>
-      `<span class="${i <= rating ? "filled" : ""}" style="width:${size}px;height:${size}px"></span>`
+      `<span class="${i <= rating ? "filled" : ""}"
+        style="width:${size}px;height:${size}px"></span>`
     ).join("")}
   </div>`;
 }
 
-// ── PRICE FORMAT ─────────────────────────────────────────────
 window.formatPriceInput = (el) => {
   const raw = el.value.replace(/[^0-9]/g, "");
   el.value = raw ? "Rp " + Number(raw).toLocaleString("id-ID") : "";
@@ -89,7 +130,7 @@ function getRawPrice(el) {
 }
 
 // ═════════════════════════════════════════════════════════════
-//  AUTH
+//  AUTH  (opsional — untuk komentar & admin saja)
 // ═════════════════════════════════════════════════════════════
 onAuthStateChanged(auth, user => {
   currentUser = user;
@@ -97,16 +138,16 @@ onAuthStateChanged(auth, user => {
   renderCommentInput();
 
   if (user) {
-    // Watch unlocked items for this user
+    // Tambahkan unlocks dari akun login ke set
     onValue(ref(db, "unlocked/" + user.uid), snap => {
-      unlockedItems = snap.val() ? new Set(Object.keys(snap.val())) : new Set();
+      const data = snap.val();
+      if (data) Object.keys(data).forEach(id => unlockedItems.add(id));
       renderCards();
     });
     if (user.email === ADMIN_EMAIL) {
       document.getElementById("adminPanel").classList.add("active");
     }
   } else {
-    unlockedItems = new Set();
     document.getElementById("adminPanel").classList.remove("active");
     renderCards();
   }
@@ -150,15 +191,16 @@ window.handleSendLink = async () => {
       `Link dikirim ke ${email}. Cek inbox / spam. Berlaku 1 jam.`;
   } catch (e) {
     const msgs = {
-      "auth/invalid-email":        "Format email tidak valid.",
-      "auth/too-many-requests":    "Terlalu banyak percobaan.",
-      "auth/operation-not-allowed":"Email Link belum aktif di Firebase."
+      "auth/invalid-email":         "Format email tidak valid.",
+      "auth/too-many-requests":     "Terlalu banyak percobaan.",
+      "auth/operation-not-allowed": "Email Link belum aktif di Firebase.",
+      "auth/quota-exceeded":        "Kuota email habis hari ini, coba besok."
     };
     errEl.textContent = msgs[e.code] || e.message;
   }
 };
 
-// Magic link — receive (redirect back)
+// Magic link — receive
 if (isSignInWithEmailLink(auth, window.location.href)) {
   let email = localStorage.getItem("emailForSignIn");
   let name  = localStorage.getItem("nameForSignIn");
@@ -187,7 +229,7 @@ window.resetModal = () => {
 };
 
 // ═════════════════════════════════════════════════════════════
-//  ITEMS  (Firebase Realtime DB)
+//  ITEMS
 // ═════════════════════════════════════════════════════════════
 onValue(ref(db, "items"), snap => {
   const data = snap.val();
@@ -196,7 +238,6 @@ onValue(ref(db, "items"), snap => {
     : [];
   applyFilter();
   if (currentUser?.email === ADMIN_EMAIL) loadAdminList();
-  // refresh comment input so item options stay updated
   if (currentUser) renderCommentInput();
 });
 
@@ -211,7 +252,7 @@ function applyFilter() {
   renderPagination();
 }
 
-// ── RENDER CARDS ─────────────────────────────────────────────
+// ── RENDER CARDS ──────────────────────────────────────────────
 function renderCards() {
   const container = document.getElementById("cardsList");
   if (!filteredItems.length) {
@@ -223,13 +264,13 @@ function renderCards() {
   const pageItems = filteredItems.slice(start, start + ITEMS_PER_PAGE);
 
   container.innerHTML = pageItems.map((item, i) => {
-    const isPaid    = item.type === "paid";
-    const isAdmin   = currentUser?.email === ADMIN_EMAIL;
+    const isPaid     = item.type === "paid";
+    const isAdmin    = currentUser?.email === ADMIN_EMAIL;
     const isUnlocked = !isPaid || unlockedItems.has(item.id) || isAdmin;
-    const clicks    = item.clicks || 0;
-    const priceStr  = "Rp " + Number(item.price || 0).toLocaleString("id-ID");
+    const clicks     = item.clicks || 0;
+    const priceStr   = "Rp " + Number(item.price || 0).toLocaleString("id-ID");
 
-    // ── LOCKED (paid & not bought) ──
+    // ── LOCKED ──
     if (isPaid && !isUnlocked) {
       return `
       <div class="card-item" style="animation-delay:${i * .07}s">
@@ -267,8 +308,10 @@ function renderCards() {
           ${isPaid ? "PREMIUM" : "GRATIS"}
         </div>
         <div class="card-click-count">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" width="11" height="11">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8"
+            stroke-width="2" stroke-linecap="round" width="11" height="11">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
           ${clicks.toLocaleString("id-ID")} klik
         </div>
@@ -277,16 +320,17 @@ function renderCards() {
         <div class="card-title-row">
           <div class="card-title">${esc(item.title)}</div>
           <div class="card-click-label">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="12" height="12">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" width="12" height="12">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             ${clicks.toLocaleString("id-ID")}
           </div>
         </div>
         ${item.desc
-          ? `<div class="card-desc-preview" id="prev-${item.id}" onclick="toggleDesc('${item.id}')">
-               Lihat deskripsi
-             </div>
+          ? `<div class="card-desc-preview" id="prev-${item.id}"
+               onclick="toggleDesc('${item.id}')">Lihat deskripsi</div>
              <div class="card-desc-full" id="desc-${item.id}">${esc(item.desc)}</div>`
           : ""
         }
@@ -314,8 +358,7 @@ function renderPagination() {
   if (total <= 1) { pg.innerHTML = ""; return; }
 
   let html = currentPage > 1
-    ? `<button class="page-btn" onclick="window._goPage(${currentPage - 1})">‹</button>`
-    : "";
+    ? `<button class="page-btn" onclick="window._goPage(${currentPage - 1})">‹</button>` : "";
   for (let i = 1; i <= total; i++) {
     html += `<button class="page-btn ${i === currentPage ? "active" : ""}"
                onclick="window._goPage(${i})">${i}</button>`;
@@ -333,7 +376,6 @@ window._goPage = p => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
-// ── TAB / SEARCH ──────────────────────────────────────────────
 window.switchTab = tab => {
   currentTab = tab;
   document.getElementById("tabFree").classList.toggle("active", tab === "free");
@@ -405,9 +447,8 @@ function loadAdminList() {
     return;
   }
   list.innerHTML =
-    `<div style="color:var(--gold);font-size:.76rem;letter-spacing:1px;margin-bottom:8px;font-weight:800">
-       DAFTAR (${allItems.length})
-     </div>` +
+    `<div style="color:var(--gold);font-size:.76rem;letter-spacing:1px;
+      margin-bottom:8px;font-weight:800">DAFTAR (${allItems.length})</div>` +
     allItems.map(item => `
       <div class="admin-item">
         <div class="admin-item-info">
@@ -418,7 +459,7 @@ function loadAdminList() {
               : `<span class="meta-free">GRATIS</span>`
             }
             &nbsp;·&nbsp;
-            <span style="color:var(--gray2)">${(item.clicks||0)} klik</span>
+            <span style="color:var(--gray2)">${item.clicks || 0} klik</span>
           </div>
         </div>
         <button class="btn-sm btn-edit" onclick="window._editItem('${item.id}')">Edit</button>
@@ -429,9 +470,9 @@ function loadAdminList() {
 
 window._editItem = id => {
   const item = allItems.find(i => i.id === id); if (!item) return;
-  document.getElementById("editId").value    = id;
-  document.getElementById("imgUrl").value    = item.imgUrl   || "";
-  document.getElementById("linkUrl").value   = item.linkUrl  || "";
+  document.getElementById("editId").value     = id;
+  document.getElementById("imgUrl").value     = item.imgUrl  || "";
+  document.getElementById("linkUrl").value    = item.linkUrl || "";
   document.getElementById("titleInput").value = item.title   || "";
   document.getElementById("descInput").value  = item.desc    || "";
   document.getElementById("typeInput").value  = item.type    || "free";
@@ -450,10 +491,10 @@ window._deleteItem = async id => {
 };
 
 // ═════════════════════════════════════════════════════════════
-//  PAYMENT  (Midtrans Snap)
+//  PAYMENT  — tanpa login, simpan ke device key selamanya
 // ═════════════════════════════════════════════════════════════
 window._openPayModal = (id, title, price) => {
-  if (!currentUser) { window._openModal(); return; }
+  // Tidak perlu login — langsung buka modal bayar
   payingItem = { id, title, price };
   document.getElementById("payItemTitle").textContent = title;
   document.getElementById("payItemPrice").textContent =
@@ -467,17 +508,26 @@ window.closePayModal = () => {
 };
 
 window.startPayment = async () => {
-  if (!payingItem || !currentUser) return;
+  if (!payingItem) return;
 
-  const orderId = "biragm-" + payingItem.id.slice(-6) + "-" + Date.now();
-  const name    = currentUser.displayName || currentUser.email.split("@")[0];
+  const orderId   = "biragm-" + payingItem.id.slice(-6) + "-" + Date.now();
+  // Pakai nama dari akun jika login, atau "Guest" jika tidak
+  const name      = currentUser?.displayName
+    || currentUser?.email?.split("@")[0]
+    || "Guest";
+  const email     = currentUser?.email || "guest@biragm.com";
 
   const params = {
-    transaction_details: { order_id: orderId, gross_amount: Number(payingItem.price) },
-    customer_details:    { first_name: name, email: currentUser.email },
+    transaction_details: {
+      order_id:    orderId,
+      gross_amount: Number(payingItem.price)
+    },
+    customer_details: { first_name: name, email },
     item_details: [{
-      id: payingItem.id, price: Number(payingItem.price),
-      quantity: 1, name: payingItem.title
+      id:       payingItem.id,
+      price:    Number(payingItem.price),
+      quantity: 1,
+      name:     payingItem.title
     }]
   };
 
@@ -485,11 +535,12 @@ window.startPayment = async () => {
     const res = await fetch("https://app.midtrans.com/snap/v1/transactions", {
       method:  "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type":  "application/json",
         "Authorization": "Basic " + btoa(MIDTRANS_SERVER_KEY + ":")
       },
       body: JSON.stringify(params)
     });
+
     const data = await res.json();
     if (!data.token) { alert("Gagal membuat transaksi."); return; }
 
@@ -499,11 +550,21 @@ window.startPayment = async () => {
 
     window.snap.pay(data.token, {
       onSuccess: async result => {
-        // Save unlock record
-        await set(ref(db, "unlocked/" + currentUser.uid + "/" + savedItem.id), {
-          orderId: result.order_id, paidAt: Date.now(), amount: savedItem.price
-        });
-        // Redirect to actual content URL
+        // Simpan unlock ke device key (selamanya, tanpa login)
+        await saveDeviceUnlock(savedItem.id, result.order_id, savedItem.price);
+
+        // Jika sedang login, simpan juga ke akun
+        if (currentUser) {
+          await set(
+            ref(db, "unlocked/" + currentUser.uid + "/" + savedItem.id),
+            { orderId: result.order_id, paidAt: Date.now(), amount: savedItem.price }
+          );
+        }
+
+        // Render ulang supaya kartu langsung terbuka
+        renderCards();
+
+        // Redirect ke URL konten
         const snap2   = await get(itemRef);
         const linkUrl = snap2.val()?.linkUrl;
         if (linkUrl) window.location.href = linkUrl;
@@ -512,14 +573,13 @@ window.startPayment = async () => {
       onError:   () => alert("Pembayaran gagal, silakan coba lagi."),
       onClose:   () => {}
     });
+
   } catch (e) { alert("Error: " + e.message); }
 };
 
 // ═════════════════════════════════════════════════════════════
 //  COMMENTS & RATINGS
 // ═════════════════════════════════════════════════════════════
-
-// ── Comment input form ────────────────────────────────────────
 function renderCommentInput() {
   const area = document.getElementById("commentInputArea");
   if (!currentUser) {
@@ -567,7 +627,6 @@ window._onItemSelect = val => {
   document.getElementById("starInputRow").style.display = val ? "flex" : "none";
 };
 
-// ── Star interaction ──────────────────────────────────────────
 const starLabels = ["","Buruk","Kurang","Cukup","Bagus","Sangat Bagus"];
 
 window.hoverStar = n => {
@@ -578,8 +637,7 @@ window.hoverStar = n => {
 };
 
 window.unhoverStar = () => {
-  document.querySelectorAll(".stars-input span").forEach(s =>
-    s.classList.remove("hover"));
+  document.querySelectorAll(".stars-input span").forEach(s => s.classList.remove("hover"));
   updateStarDisplay();
 };
 
@@ -597,7 +655,6 @@ function updateStarDisplay() {
   });
 }
 
-// ── Listen to comments ────────────────────────────────────────
 onValue(ref(db, "comments"), snap => {
   const data = snap.val();
   allComments = data
@@ -612,13 +669,12 @@ onValue(ref(db, "comments"), snap => {
   renderRatingSummary();
 });
 
-// ── Rating summary ────────────────────────────────────────────
 function renderRatingSummary() {
   const withRating = allComments.filter(c => c.rating > 0);
   const el = document.getElementById("ratingSummary");
   if (!withRating.length) { el.innerHTML = ""; return; }
 
-  const avg = withRating.reduce((s,c) => s + (c.rating||0), 0) / withRating.length;
+  const avg    = withRating.reduce((s,c) => s + (c.rating||0), 0) / withRating.length;
   const counts = [0,0,0,0,0];
   withRating.forEach(c => { if (c.rating >= 1 && c.rating <= 5) counts[c.rating-1]++; });
 
@@ -631,12 +687,12 @@ function renderRatingSummary() {
       </div>
       <div style="flex:1;margin-left:8px">
         ${[5,4,3,2,1].map(n => {
-          const pct = withRating.length
-            ? Math.round(counts[n-1] / withRating.length * 100) : 0;
+          const pct = Math.round((counts[n-1] / withRating.length) * 100);
           return `
             <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">
               <span style="color:var(--gray2);font-size:.65rem;width:8px">${n}</span>
-              <div style="flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden">
+              <div style="flex:1;height:4px;background:rgba(255,255,255,.08);
+                border-radius:2px;overflow:hidden">
                 <div style="width:${pct}%;height:100%;background:var(--gold);border-radius:2px"></div>
               </div>
             </div>`;
@@ -645,13 +701,11 @@ function renderRatingSummary() {
     </div>`;
 }
 
-// ── Render comments list ──────────────────────────────────────
 function renderComments(forceAll = false) {
-  const list      = document.getElementById("commentsList");
+  const list = document.getElementById("commentsList");
   if (!allComments.length) {
-    list.innerHTML = `<div style="color:var(--gray2);text-align:center;padding:18px;font-size:.85rem">
-      Belum ada ulasan.
-    </div>`;
+    list.innerHTML = `<div style="color:var(--gray2);text-align:center;
+      padding:18px;font-size:.85rem">Belum ada ulasan.</div>`;
     return;
   }
 
@@ -659,8 +713,8 @@ function renderComments(forceAll = false) {
   const remaining = allComments.length - SHOWN_COMMENTS;
 
   list.innerHTML = shown.map((c, idx) => {
-    const itemTitle  = allItems.find(i => i.id === c.itemId)?.title || "";
-    const replyList  = c.replies
+    const itemTitle   = allItems.find(i => i.id === c.itemId)?.title || "";
+    const replyList   = c.replies
       ? Object.entries(c.replies)
           .map(([rid,rv]) => ({ id: rid, ...rv }))
           .sort((a,b) => a.createdAt - b.createdAt)
@@ -727,7 +781,6 @@ function renderComments(forceAll = false) {
     : "");
 }
 
-// ── Reply interaction ─────────────────────────────────────────
 window.toggleReplyForm = id => {
   document.getElementById("rf-" + id)?.classList.toggle("open");
 };
@@ -760,7 +813,6 @@ window.submitReply = async commentId => {
   document.getElementById("rf-" + commentId)?.classList.remove("open");
 };
 
-// ── Submit comment ────────────────────────────────────────────
 window._submitComment = async () => {
   if (!currentUser) return;
   const text = document.getElementById("commentText").value.trim();
@@ -768,10 +820,10 @@ window._submitComment = async () => {
   const name = currentUser.displayName || currentUser.email.split("@")[0];
   await push(ref(db, "comments"), {
     text, name,
-    uid:    currentUser.uid,
-    email:  currentUser.email,
-    rating: selectedStar  || 0,
-    itemId: selectedItemId || "",
+    uid:       currentUser.uid,
+    email:     currentUser.email,
+    rating:    selectedStar   || 0,
+    itemId:    selectedItemId || "",
     createdAt: Date.now()
   });
   document.getElementById("commentText").value = "";
@@ -780,9 +832,7 @@ window._submitComment = async () => {
   renderCommentInput();
 };
 
-// ═════════════════════════════════════════════════════════════
-//  MODAL CLOSE ON OVERLAY CLICK
-// ═════════════════════════════════════════════════════════════
+// ── MODAL OVERLAY CLOSE ───────────────────────────────────────
 document.getElementById("authModal").addEventListener("click", e => {
   if (e.target === document.getElementById("authModal")) closeModal();
 });
