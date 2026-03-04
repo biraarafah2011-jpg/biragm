@@ -23,11 +23,10 @@ const firebaseConfig = {
   databaseURL:       "https://biragm-website-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
 
-const ADMIN_EMAIL         = "biraarafah2011@gmail.com";
-const ITEMS_PER_PAGE      = 5;
-const SHOWN_COMMENTS      = 3;
-const ACTION_CODE         = { url: "https://biragm-website.netlify.app/", handleCodeInApp: true };
-const MIDTRANS_SERVER_KEY = "Mid-server-UTDNLi0Xs3UbgRmaxU1nA7_";
+const ADMIN_EMAIL    = "biraarafah2011@gmail.com";
+const ITEMS_PER_PAGE = 5;
+const SHOWN_COMMENTS = 3;
+const ACTION_CODE    = { url: "https://biragm-website.netlify.app/", handleCodeInApp: true };
 
 // ── INIT ──────────────────────────────────────────────────────
 const app  = initializeApp(firebaseConfig);
@@ -40,20 +39,18 @@ let filteredItems  = [];
 let currentPage    = 1;
 let currentUser    = null;
 let currentTab     = "free";
-let unlockedItems  = new Set(); // gabungan dari login + device
+let unlockedItems  = new Set();
 let payingItem     = null;
 let allComments    = [];
 let selectedStar   = 0;
 let selectedItemId = "";
 
 // ═════════════════════════════════════════════════════════════
-//  DEVICE KEY  — pengganti login untuk menyimpan unlock
-//  Disimpan di localStorage, tidak hilang kecuali clear browser
+//  DEVICE KEY — simpan unlock selamanya tanpa login
 // ═════════════════════════════════════════════════════════════
 function getDeviceKey() {
   let key = localStorage.getItem("biragm_device_key");
   if (!key) {
-    // buat key unik permanen untuk perangkat ini
     key = "dev_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10);
     localStorage.setItem("biragm_device_key", key);
   }
@@ -62,20 +59,16 @@ function getDeviceKey() {
 
 const DEVICE_KEY = getDeviceKey();
 
-// Muat unlock dari Firebase berdasarkan device key
 async function loadDeviceUnlocks() {
   try {
     const snap = await get(ref(db, "device_unlocked/" + DEVICE_KEY));
     const data = snap.val();
-    if (data) {
-      Object.keys(data).forEach(id => unlockedItems.add(id));
-    }
+    if (data) Object.keys(data).forEach(id => unlockedItems.add(id));
   } catch (e) {
     console.error("loadDeviceUnlocks:", e);
   }
 }
 
-// Simpan unlock ke Firebase berdasarkan device key (selamanya)
 async function saveDeviceUnlock(itemId, orderId, amount) {
   await set(ref(db, "device_unlocked/" + DEVICE_KEY + "/" + itemId), {
     orderId, amount, paidAt: Date.now()
@@ -83,7 +76,7 @@ async function saveDeviceUnlock(itemId, orderId, amount) {
   unlockedItems.add(itemId);
 }
 
-// Inisialisasi device unlocks saat halaman load
+// Load device unlocks saat halaman pertama buka
 loadDeviceUnlocks().then(() => renderCards());
 
 // ═════════════════════════════════════════════════════════════
@@ -138,7 +131,6 @@ onAuthStateChanged(auth, user => {
   renderCommentInput();
 
   if (user) {
-    // Tambahkan unlocks dari akun login ke set
     onValue(ref(db, "unlocked/" + user.uid), snap => {
       const data = snap.val();
       if (data) Object.keys(data).forEach(id => unlockedItems.add(id));
@@ -281,7 +273,8 @@ function renderCards() {
                 style="width:100%;display:block;object-fit:cover;
                        min-height:190px;max-height:290px;
                        border-radius:18px;filter:blur(6px)" alt="">`
-            : `<div style="min-height:190px;background:linear-gradient(135deg,#1a3358,#0a1628);border-radius:18px"></div>`
+            : `<div style="min-height:190px;background:linear-gradient(135deg,#1a3358,#0a1628);
+                border-radius:18px"></div>`
           }
           <div class="card-locked-overlay">
             <div style="font-size:1.8rem">🔒</div>
@@ -491,10 +484,9 @@ window._deleteItem = async id => {
 };
 
 // ═════════════════════════════════════════════════════════════
-//  PAYMENT  — tanpa login, simpan ke device key selamanya
+//  PAYMENT — lewat Netlify Function, tanpa login
 // ═════════════════════════════════════════════════════════════
 window._openPayModal = (id, title, price) => {
-  // Tidak perlu login — langsung buka modal bayar
   payingItem = { id, title, price };
   document.getElementById("payItemTitle").textContent = title;
   document.getElementById("payItemPrice").textContent =
@@ -510,16 +502,15 @@ window.closePayModal = () => {
 window.startPayment = async () => {
   if (!payingItem) return;
 
-  const orderId   = "biragm-" + payingItem.id.slice(-6) + "-" + Date.now();
-  // Pakai nama dari akun jika login, atau "Guest" jika tidak
-  const name      = currentUser?.displayName
+  const orderId = "biragm-" + payingItem.id.slice(-6) + "-" + Date.now();
+  const name    = currentUser?.displayName
     || currentUser?.email?.split("@")[0]
     || "Guest";
-  const email     = currentUser?.email || "guest@biragm.com";
+  const email   = currentUser?.email || "guest@biragm.com";
 
   const params = {
     transaction_details: {
-      order_id:    orderId,
+      order_id:     orderId,
       gross_amount: Number(payingItem.price)
     },
     customer_details: { first_name: name, email },
@@ -532,17 +523,18 @@ window.startPayment = async () => {
   };
 
   try {
-    const res = await fetch("https://app.midtrans.com/snap/v1/transactions", {
+    // Panggil Netlify Function — bukan langsung ke Midtrans
+    const res = await fetch("/.netlify/functions/create-payment", {
       method:  "POST",
-      headers: {
-        "Content-Type":  "application/json",
-        "Authorization": "Basic " + btoa(MIDTRANS_SERVER_KEY + ":")
-      },
-      body: JSON.stringify(params)
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(params)
     });
 
     const data = await res.json();
-    if (!data.token) { alert("Gagal membuat transaksi."); return; }
+    if (!data.token) {
+      alert("Gagal membuat transaksi: " + (data.error_messages?.[0] || "Coba lagi."));
+      return;
+    }
 
     closePayModal();
     const savedItem = { ...payingItem };
@@ -550,10 +542,10 @@ window.startPayment = async () => {
 
     window.snap.pay(data.token, {
       onSuccess: async result => {
-        // Simpan unlock ke device key (selamanya, tanpa login)
+        // Simpan ke device (tanpa login)
         await saveDeviceUnlock(savedItem.id, result.order_id, savedItem.price);
 
-        // Jika sedang login, simpan juga ke akun
+        // Kalau kebetulan login, simpan juga ke akun
         if (currentUser) {
           await set(
             ref(db, "unlocked/" + currentUser.uid + "/" + savedItem.id),
@@ -561,7 +553,7 @@ window.startPayment = async () => {
           );
         }
 
-        // Render ulang supaya kartu langsung terbuka
+        // Render ulang — kartu langsung terbuka
         renderCards();
 
         // Redirect ke URL konten
@@ -574,7 +566,9 @@ window.startPayment = async () => {
       onClose:   () => {}
     });
 
-  } catch (e) { alert("Error: " + e.message); }
+  } catch (e) {
+    alert("Error: " + e.message);
+  }
 };
 
 // ═════════════════════════════════════════════════════════════
@@ -693,7 +687,8 @@ function renderRatingSummary() {
               <span style="color:var(--gray2);font-size:.65rem;width:8px">${n}</span>
               <div style="flex:1;height:4px;background:rgba(255,255,255,.08);
                 border-radius:2px;overflow:hidden">
-                <div style="width:${pct}%;height:100%;background:var(--gold);border-radius:2px"></div>
+                <div style="width:${pct}%;height:100%;background:var(--gold);
+                  border-radius:2px"></div>
               </div>
             </div>`;
         }).join("")}
