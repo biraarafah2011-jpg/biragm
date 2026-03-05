@@ -235,10 +235,27 @@ onValue(ref(db, "items"), snap => {
 
 function applyFilter() {
   const q = (document.getElementById("searchInput")?.value || "").toLowerCase();
-  filteredItems = allItems.filter(i => {
-    const matchTab = currentTab === "free" ? i.type !== "paid" : i.type === "paid";
-    return matchTab && (!q || i.title.toLowerCase().includes(q));
-  });
+
+  if (currentTab === "trending") {
+    // Ambil semua item, hitung skor: klik + (rating rata2 × 20)
+    const withScore = allItems.map(item => {
+      const itemComments = allComments.filter(c => c.itemId === item.id && c.rating > 0);
+      const avgRating = itemComments.length
+        ? itemComments.reduce((s, c) => s + c.rating, 0) / itemComments.length : 0;
+      const score = (item.clicks || 0) + (avgRating * 20);
+      return { ...item, _score: score, _avgRating: avgRating };
+    });
+    filteredItems = withScore
+      .filter(i => !q || i.title.toLowerCase().includes(q))
+      .sort((a, b) => b._score - a._score)
+      .slice(0, 10); // top 10
+  } else {
+    filteredItems = allItems.filter(i => {
+      const matchTab = currentTab === "free" ? i.type !== "paid" : i.type === "paid";
+      return matchTab && (!q || i.title.toLowerCase().includes(q));
+    });
+  }
+
   currentPage = 1;
   renderCards();
   renderPagination();
@@ -373,6 +390,7 @@ window.switchTab = tab => {
   currentTab = tab;
   document.getElementById("tabFree").classList.toggle("active", tab === "free");
   document.getElementById("tabPaid").classList.toggle("active", tab === "paid");
+  document.getElementById("tabTrending").classList.toggle("active", tab === "trending");
   applyFilter();
 };
 

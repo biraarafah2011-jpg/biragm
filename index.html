@@ -132,6 +132,11 @@ header {
   border-bottom-color: var(--gold);
   background: rgba(245,158,11,0.08);
 }
+.tab-btn.tab-trending.active {
+  color: #f43f5e;
+  border-bottom-color: #f43f5e;
+  background: rgba(244,63,94,0.08);
+}
 
 /* ── MAIN ───────────────────────────────────────── */
 main { position: relative; z-index: 1; padding: 18px 14px 28px; max-width: 500px; margin: 0 auto; }
@@ -531,8 +536,9 @@ footer { position: relative; z-index: 1; border-top: 1px solid rgba(37,99,235,.1
 
 <!-- ── TABS ────────────────────────────────────────────── -->
 <div class="tabs-wrap">
-  <button class="tab-btn active"   id="tabFree" onclick="switchTab('free')">GRATIS</button>
-  <button class="tab-btn tab-paid" id="tabPaid" onclick="switchTab('paid')">BERBAYAR</button>
+  <button class="tab-btn active"      id="tabFree"     onclick="switchTab('free')">GRATIS</button>
+  <button class="tab-btn tab-paid"    id="tabPaid"     onclick="switchTab('paid')">BERBAYAR</button>
+  <button class="tab-btn tab-trending" id="tabTrending" onclick="switchTab('trending')">TRENDING</button>
 </div>
 
 <!-- ── MAIN ────────────────────────────────────────────── -->
