@@ -1,0 +1,111 @@
+// netlify/functions/payment-webhook.js
+// Midtrans mengirim notifikasi ke sini setelah pembayaran sukses
+// Unlock disimpan ke Firebase oleh SERVER — bukan oleh browser
+//
+// Di dashboard Midtrans, set Notification URL ke:
+//   https://biragm-website.netlify.app/.netlify/functions/payment-webhook
+
+const https  = require("https");
+const crypto = require("crypto");
+
+// ── Verifikasi signature Midtrans ─────────────────────────────
+function verifySignature(orderId, statusCode, grossAmount, serverKey) {
+  const raw  = orderId + statusCode + grossAmount + serverKey;
+  return crypto.createHash("sha512").update(raw).digest("hex");
+}
+
+// ── Tulis ke Firebase via REST ────────────────────────────────
+function firebaseSet(path, data) {
+  const dbUrl    = process.env.FIREBASE_DB_URL;
+  const fbSecret = process.env.FIREBASE_DB_SECRET;
+  return new Promise((resolve, reject) => {
+    const body    = JSON.stringify(data);
+    const urlStr  = dbUrl + path + ".json" + (fbSecret ? "?auth=" + fbSecret : "");
+    const url     = new URL(urlStr);
+    const options = {
+      hostname: url.hostname,
+      path:     url.pathname + url.search,
+      method:   "PUT",
+      headers:  {
+        "Content-Type":   "application/json",
+        "Content-Length": Buffer.byteLength(body)
+      }
+    };
+    const req = https.request(options, res => {
+      let raw = "";
+      res.on("data", chunk => raw += chunk);
+      res.on("end", () => resolve(raw));
+    });
+    req.on("error", reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+// ── HANDLER ───────────────────────────────────────────────────
+exports.handler = async (event) => {
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: "Method Not Allowed" };
+  }
+
+  try {
+    const notif = JSON.parse(event.body);
+
+    // ── 1. Verifikasi signature dari Midtrans ─────────────────
+    const serverKey    = process.env.MIDTRANS_SERVER_KEY;
+    const expectedSig  = verifySignature(
+      notif.order_id,
+      notif.status_code,
+      notif.gross_amount,
+      serverKey
+    );
+
+    if (notif.signature_key !== expectedSig) {
+      console.error("Signature mismatch — request palsu ditolak");
+      return { statusCode: 403, body: JSON.stringify({ error: "Invalid signature" }) };
+    }
+
+    // ── 2. Hanya proses jika transaksi benar-benar sukses ─────
+    const successStatuses = ["capture", "settlement"];
+    if (!successStatuses.includes(notif.transaction_status)) {
+      return { statusCode: 200, body: JSON.stringify({ status: "ignored", txStatus: notif.transaction_status }) };
+    }
+    // Untuk kartu kredit, pastikan fraud_status bersih
+    if (notif.payment_type === "credit_card" && notif.fraud_status !== "accept") {
+      return { statusCode: 200, body: JSON.stringify({ status: "ignored", reason: "fraud_status not accept" }) };
+    }
+
+    // ── 3. Parse order_id → ambil itemId ─────────────────────
+    // Format order_id: "biragm-<itemId6char>-<timestamp>"
+    const parts  = notif.order_id.split("-");
+    // item id 6 char ada di index 1
+    // Tapi kita simpan full order_id untuk referensi
+    const itemId6 = parts[1]; // 6 char suffix dari item id
+
+    // ── 4. Simpan unlock ke Firebase path verified_unlocked ───
+    // Key: order_id (unik per transaksi)
+    await firebaseSet("/verified_unlocked/" + notif.order_id, {
+      orderId:      notif.order_id,
+      itemId6:      itemId6,
+      grossAmount:  notif.gross_amount,
+      paidAt:       Date.now(),
+      txStatus:     notif.transaction_status,
+      paymentType:  notif.payment_type,
+      verified:     true
+    });
+
+    console.log("Unlock tersimpan untuk order:", notif.order_id);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ status: "ok" })
+    };
+
+  } catch (e) {
+    console.error("payment-webhook error:", e);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: e.message })
+    };
+  }
+};
