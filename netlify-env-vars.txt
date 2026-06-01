@@ -1,0 +1,24 @@
+# ══════════════════════════════════════════════════════════════
+#  NETLIFY ENVIRONMENT VARIABLES — BIRA GM
+#  Masukkan semua ini di:
+#  Netlify Dashboard → biragm-website → Site Configuration →
+#  Environment Variables → Add variable
+# ══════════════════════════════════════════════════════════════
+
+# Midtrans Server Key (dari Midtrans Dashboard → Settings → Access Keys)
+MIDTRANS_SERVER_KEY=Mid-server-UTDNLi0Xs3UbgRmaxU1nA7_b
+
+# Firebase Realtime Database URL
+FIREBASE_DB_URL=https://biragm-website-default-rtdb.asia-southeast1.firebasedatabase.app
+
+# Firebase Database Secret (untuk server-side write tanpa auth)
+# Ambil dari: Firebase Console → Project Settings → Service Accounts →
+# Database Secrets → Show
+# (Kalau tidak ada, buat baru di sana)
+FIREBASE_DB_SECRET=GANTI_DENGAN_SECRET_KAMU
+
+# ══════════════════════════════════════════════════════════════
+#  SETELAH SET ENV VARS:
+#  1. Hapus key lama dari kode (sudah dilakukan di file yang difix)
+#  2. Redeploy site di Netlify
+# ══════════════════════════════════════════════════════════════

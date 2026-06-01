@@ -46,38 +46,70 @@ let selectedStar   = 0;
 let selectedItemId = "";
 
 // ═════════════════════════════════════════════════════════════
-//  DEVICE KEY — simpan unlock selamanya tanpa login
+//  ORDER UNLOCK — simpan unlock berdasarkan order_id yang sudah
+//  diverifikasi oleh server (payment-webhook.js)
+//  localStorage hanya menyimpan daftar order_id sukses milik user
 // ═════════════════════════════════════════════════════════════
-function getDeviceKey() {
-  let key = localStorage.getItem("biragm_device_key");
-  if (!key) {
-    key = "dev_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10);
-    localStorage.setItem("biragm_device_key", key);
-  }
-  return key;
-}
 
-const DEVICE_KEY = getDeviceKey();
-
-async function loadDeviceUnlocks() {
+// Ambil daftar order_id yang user ini sudah bayar (dari localStorage)
+function getSavedOrderIds() {
   try {
-    const snap = await get(ref(db, "device_unlocked/" + DEVICE_KEY));
-    const data = snap.val();
-    if (data) Object.keys(data).forEach(id => unlockedItems.add(id));
-  } catch (e) {
-    console.error("loadDeviceUnlocks:", e);
+    return JSON.parse(localStorage.getItem("biragm_paid_orders") || "[]");
+  } catch { return []; }
+}
+
+// Simpan order_id baru ke localStorage
+function saveOrderId(orderId) {
+  const orders = getSavedOrderIds();
+  if (!orders.includes(orderId)) {
+    orders.push(orderId);
+    localStorage.setItem("biragm_paid_orders", JSON.stringify(orders));
   }
 }
 
-async function saveDeviceUnlock(itemId, orderId, amount) {
-  await set(ref(db, "device_unlocked/" + DEVICE_KEY + "/" + itemId), {
-    orderId, amount, paidAt: Date.now()
-  });
-  unlockedItems.add(itemId);
+// Cek ke Firebase: apakah order_id ini sudah diverifikasi server?
+async function verifyOrderUnlock(orderId, itemId) {
+  try {
+    const snap = await get(ref(db, "verified_unlocked/" + orderId));
+    const data = snap.val();
+    if (!data || !data.verified) return false;
+    // Cocokkan 6 char terakhir item id
+    const item6 = itemId.slice(-6);
+    if (data.itemId6 !== item6) return false;
+    return true;
+  } catch (e) {
+    console.error("verifyOrderUnlock:", e);
+    return false;
+  }
 }
 
-// Load device unlocks saat halaman pertama buka
-loadDeviceUnlocks().then(() => renderCards());
+// Load unlock saat halaman buka — cek semua order_id tersimpan ke Firebase
+async function loadVerifiedUnlocks() {
+  const orders = getSavedOrderIds();
+  for (const orderId of orders) {
+    // Format: biragm-<itemId6>-<timestamp>
+    const parts  = orderId.split("-");
+    const itemId6 = parts[1];
+    if (!itemId6) continue;
+    const isValid = await verifyOrderUnlock(orderId, itemId6);
+    if (isValid) {
+      // Cari item yang cocok dengan 6 char suffix ini
+      // (akan di-update saat items loaded di bawah)
+      unlockedItems.add("pending_" + itemId6);
+    }
+  }
+}
+
+// Dipanggil setelah items loaded — resolusi pending unlocks
+function resolvePendingUnlocks() {
+  for (const item of allItems) {
+    if (unlockedItems.has("pending_" + item.id.slice(-6))) {
+      unlockedItems.add(item.id);
+    }
+  }
+}
+
+loadVerifiedUnlocks().then(() => renderCards());
 
 // ═════════════════════════════════════════════════════════════
 //  UTILS
@@ -228,6 +260,7 @@ onValue(ref(db, "items"), snap => {
   allItems = data
     ? Object.entries(data).map(([id, v]) => ({ id, ...v })).reverse()
     : [];
+  resolvePendingUnlocks(); // resolusi unlock berdasarkan verified order
   applyFilter();
   if (currentUser?.email === ADMIN_EMAIL) loadAdminList();
   if (currentUser) renderCommentInput();
@@ -560,10 +593,10 @@ window.startPayment = async () => {
 
     window.snap.pay(data.token, {
       onSuccess: async result => {
-        // Simpan ke device (tanpa login)
-        await saveDeviceUnlock(savedItem.id, result.order_id, savedItem.price);
+        // Simpan order_id ke localStorage — server akan verifikasi via webhook
+        saveOrderId(result.order_id);
 
-        // Kalau kebetulan login, simpan juga ke akun
+        // Kalau kebetulan login, simpan juga ke akun (opsional, untuk kemudahan multi-device)
         if (currentUser) {
           await set(
             ref(db, "unlocked/" + currentUser.uid + "/" + savedItem.id),
@@ -571,13 +604,25 @@ window.startPayment = async () => {
           );
         }
 
-        // Render ulang — kartu langsung terbuka
-        renderCards();
+        // Tunggu sebentar agar webhook sempat memproses, lalu cek verifikasi
+        let verified = false;
+        for (let attempt = 0; attempt < 8; attempt++) {
+          await new Promise(r => setTimeout(r, 1500));
+          verified = await verifyOrderUnlock(result.order_id, savedItem.id);
+          if (verified) break;
+        }
 
-        // Redirect ke URL konten
-        const snap2   = await get(itemRef);
-        const linkUrl = snap2.val()?.linkUrl;
-        if (linkUrl) window.location.href = linkUrl;
+        if (verified) {
+          unlockedItems.add(savedItem.id);
+          renderCards();
+          const snap2   = await get(itemRef);
+          const linkUrl = snap2.val()?.linkUrl;
+          if (linkUrl) window.location.href = linkUrl;
+        } else {
+          // Webhook mungkin delay — beri tahu user untuk refresh
+          alert("Pembayaran berhasil! Konten akan terbuka otomatis. Jika belum terbuka, coba refresh halaman.");
+          renderCards();
+        }
       },
       onPending: () => alert("Menunggu konfirmasi pembayaran."),
       onError:   () => alert("Pembayaran gagal, silakan coba lagi."),

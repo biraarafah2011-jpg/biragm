@@ -707,10 +707,12 @@ footer { position: relative; z-index: 1; border-top: 1px solid rgba(37,99,235,.1
 <script type="module" src="data.js"></script>
 
 <script>
-// ── CLOUDINARY UPLOAD ─────────────────────────────────────
-const CLOUDINARY_CLOUD = 'dmwf9amdt';
-const CLOUDINARY_KEY   = '215688851431865';
-const CLOUDINARY_SECRET = 'NY47t-LalZv-cAggNkgf7irqiK8'; // ← ganti ini
+// ── CLOUDINARY UPLOAD (Unsigned — aman, tidak ada secret) ────
+// CATATAN: Buat "unsigned upload preset" di Cloudinary dashboard:
+//   Settings → Upload → Upload Presets → Add preset → Signing Mode: Unsigned
+//   Ganti nilai CLOUDINARY_UPLOAD_PRESET di bawah dengan nama preset kamu.
+const CLOUDINARY_CLOUD         = 'dmwf9amdt';
+const CLOUDINARY_UPLOAD_PRESET = 'biragm_unsigned'; // ← ganti dengan nama unsigned preset kamu
 
 async function uploadToCloudinary(input) {
   const file = input.files[0];
@@ -731,20 +733,10 @@ async function uploadToCloudinary(input) {
   status.style.color = 'var(--gray2)';
 
   try {
-    const timestamp = Math.round(Date.now() / 1000);
-    const str       = `timestamp=${timestamp}${CLOUDINARY_SECRET}`;
-
-    // SHA-1 signature
-    const msgBuffer  = new TextEncoder().encode(str);
-    const hashBuffer = await crypto.subtle.digest('SHA-1', msgBuffer);
-    const signature  = Array.from(new Uint8Array(hashBuffer))
-      .map(b => b.toString(16).padStart(2, '0')).join('');
-
+    // Unsigned upload — tidak butuh API key atau secret di frontend
     const formData = new FormData();
-    formData.append('file',       file);
-    formData.append('api_key',    CLOUDINARY_KEY);
-    formData.append('timestamp',  timestamp);
-    formData.append('signature',  signature);
+    formData.append('file',         file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
     // Simulasi progress
     let pct = 0;
