@@ -100,7 +100,7 @@ exports.handler = async (event) => {
       customer_email:     customerEmail,
       amount:             realPrice,
       description:        item.title,
-      channel_preference: "client",
+      channel_preference: "platform",
       redirect_url:       "https://biragm-website.netlify.app/"
     };
 
@@ -112,10 +112,11 @@ exports.handler = async (event) => {
     console.log("[6] Saya Bayar response body:", JSON.stringify(result));
 
     if (status !== 201 || !result.success) {
-      console.error("[ERROR] Saya Bayar gagal — status:", status, "message:", result.message, "errors:", JSON.stringify(result.errors || result));
+      const errMsg = result?.error?.message || result?.message || "Gagal membuat invoice di Saya Bayar";
+      console.error("[ERROR] Saya Bayar gagal — status:", status, "message:", errMsg);
       return {
         statusCode: 502,
-        body: JSON.stringify({ error: result.message || "Gagal membuat invoice di Saya Bayar" })
+        body: JSON.stringify({ error: errMsg })
       };
     }
 
