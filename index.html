@@ -114,7 +114,7 @@ header {
 .tabs-wrap {
   position: relative; z-index: 1; display: flex;
   background: var(--navy2); border-bottom: 1px solid rgba(37,99,235,.18);
-  max-width: 500px; margin: 0 auto;
+  max-width: 900px; margin: 0 auto;
 }
 .tab-btn {
   flex: 1; padding: 13px 0; background: none; border: none; cursor: pointer;
@@ -139,7 +139,7 @@ header {
 }
 
 /* ── MAIN ───────────────────────────────────────── */
-main { position: relative; z-index: 1; padding: 18px 14px 28px; max-width: 500px; margin: 0 auto; }
+main { position: relative; z-index: 1; padding: 18px 14px 28px; max-width: 900px; margin: 0 auto; }
 
 /* ── ADS ────────────────────────────────────────── */
 .ad-block {
@@ -148,72 +148,95 @@ main { position: relative; z-index: 1; padding: 18px 14px 28px; max-width: 500px
 }
 .ad-side { display: flex; justify-content: center; margin: 20px 0; opacity: .9; }
 
-/* ── CARDS ──────────────────────────────────────── */
-.card-item { margin-bottom: 20px; animation: fadeUp .38s ease both; }
+/* ── CARDS GRID — bersampingan 2 kolom, gambar tetap 16:9 ──── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 12px;
+}
+@media (max-width: 480px) {
+  .cards-grid { gap: 14px 9px; }
+}
+
+.card-item { animation: fadeUp .38s ease both; display: flex; flex-direction: column; }
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(18px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .card-image-wrap {
-  background: #f1f5f9; border-radius: 18px;
+  background: #f1f5f9; border-radius: 14px;
   overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.38);
   cursor: pointer; transition: transform .2s, box-shadow .2s;
-  display: block; text-decoration: none; min-height: 190px; position: relative;
+  display: block; text-decoration: none; position: relative;
+  aspect-ratio: 16 / 9; width: 100%;
 }
 .card-image-wrap:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(37,99,235,.35); }
-.card-image-wrap img { width: 100%; display: block; object-fit: cover; min-height: 190px; max-height: 290px; }
+.card-image-wrap img {
+  width: 100%; height: 100%; display: block; object-fit: cover;
+}
 .card-image-placeholder {
-  width: 100%; min-height: 190px; display: flex; align-items: center; justify-content: center;
-  color: #94a3b8; font-size: .88rem; background: linear-gradient(135deg,#dde3ed,#eef1f6);
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  color: #94a3b8; font-size: .78rem; background: linear-gradient(135deg,#dde3ed,#eef1f6);
+  text-align: center; padding: 0 8px;
 }
 .card-badge {
-  position: absolute; top: 11px; right: 11px;
-  font-weight: 800; font-size: .68rem; padding: 3px 9px; border-radius: 18px; letter-spacing: .8px;
+  position: absolute; top: 8px; right: 8px;
+  font-weight: 800; font-size: .6rem; padding: 2px 8px; border-radius: 16px; letter-spacing: .6px;
 }
 .badge-free     { background: linear-gradient(135deg,#059669,#10b981); color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,.45); }
 .badge-paid-tag { background: linear-gradient(135deg,#d97706,#f59e0b); color: #1a1100; box-shadow: 0 2px 8px rgba(245,158,11,.45); }
 .card-click-count {
-  position: absolute; bottom: 10px; left: 12px;
+  position: absolute; bottom: 7px; left: 8px;
   background: rgba(0,0,0,.5); backdrop-filter: blur(4px);
-  color: #fff; font-size: .68rem; padding: 3px 9px; border-radius: 12px;
-  display: flex; align-items: center; gap: 4px;
+  color: #fff; font-size: .6rem; padding: 2px 7px; border-radius: 10px;
+  display: flex; align-items: center; gap: 3px;
 }
+.card-click-count svg { width: 9px; height: 9px; flex-shrink: 0; }
 
 /* ── LOCKED CARD ────────────────────────────────── */
-.card-locked { position: relative; border-radius: 18px; overflow: hidden; min-height: 190px; cursor: pointer; }
+.card-locked {
+  position: relative; border-radius: 14px; overflow: hidden; cursor: pointer;
+  aspect-ratio: 16 / 9; width: 100%;
+}
+.card-locked img,
+.card-locked > div:first-child {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
 .card-locked-overlay {
   position: absolute; inset: 0;
-  background: rgba(8,18,36,.68); backdrop-filter: blur(7px);
+  background: rgba(8,18,36,.7); backdrop-filter: blur(6px);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 9px; border-radius: 18px;
+  gap: 5px; border-radius: 14px; padding: 8px;
 }
-.lock-text  { color: #fff; font-weight: 700; font-size: .88rem; text-align: center; padding: 0 14px; }
-.lock-price { color: var(--gold); font-weight: 900; font-size: 1.05rem; font-family: 'Orbitron', monospace; }
+.lock-text  { color: #fff; font-weight: 700; font-size: .72rem; text-align: center; line-height: 1.25; }
+.lock-price { color: var(--gold); font-weight: 900; font-size: .85rem; font-family: 'Orbitron', monospace; }
 .unlock-btn {
   background: linear-gradient(135deg, var(--gold), #d97706);
-  border: none; color: #1a1100; padding: 9px 22px; border-radius: 18px;
+  border: none; color: #1a1100; padding: 5px 14px; border-radius: 14px;
   cursor: pointer; font-weight: 800; font-family: 'Exo 2', sans-serif;
-  font-size: .85rem; transition: all .2s; letter-spacing: .8px;
+  font-size: .68rem; transition: all .2s; letter-spacing: .5px;
 }
 .unlock-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(245,158,11,.45); }
 
 /* ── CARD TITLE BOX ─────────────────────────────── */
 .card-title-box {
-  background: var(--title-bg); border-radius: 13px;
-  padding: 11px 14px; margin-top: 7px; border: 1px solid rgba(37,99,235,.2);
+  background: var(--title-bg); border-radius: 11px;
+  padding: 9px 10px; margin-top: 6px; border: 1px solid rgba(37,99,235,.2);
+  flex: 1; display: flex; flex-direction: column;
 }
-.card-title-row   { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.card-title       { font-weight: 700; color: var(--white); font-size: .92rem; }
-.card-click-label { color: var(--gray2); font-size: .7rem; display: flex; align-items: center; gap: 3px; white-space: nowrap; flex-shrink: 0; }
-.card-desc-preview { color: var(--gray2); font-size: .79rem; margin-top: 4px; cursor: pointer; }
+.card-title-row   { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+.card-title       { font-weight: 700; color: var(--white); font-size: .78rem; line-height: 1.3; }
+.card-click-label { color: var(--gray2); font-size: .62rem; display: flex; align-items: center; gap: 2px; white-space: nowrap; flex-shrink: 0; margin-top: 1px; }
+.card-click-label svg { width: 10px; height: 10px; }
+.card-desc-preview { color: var(--gray2); font-size: .68rem; margin-top: 4px; cursor: pointer; }
 .card-desc-full {
-  display: none; color: var(--gray); font-size: .79rem; line-height: 1.55;
-  padding-top: 7px; border-top: 1px solid rgba(255,255,255,.08); margin-top: 7px;
+  display: none; color: var(--gray); font-size: .68rem; line-height: 1.5;
+  padding-top: 6px; border-top: 1px solid rgba(255,255,255,.08); margin-top: 6px;
 }
 .card-desc-full.open { display: block; }
 
 /* ── PAGINATION ─────────────────────────────────── */
-.pagination { display: flex; justify-content: center; align-items: center; gap: 6px; padding: 14px 0; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 6px; padding: 14px 0; flex-wrap: wrap; }
 .page-btn {
   min-width: 34px; height: 34px; border-radius: 50%;
   border: 1px solid rgba(37,99,235,.35); background: rgba(37,99,235,.12);
@@ -504,10 +527,10 @@ footer { position: relative; z-index: 1; border-top: 1px solid rgba(37,99,235,.1
 .pay-note { color: var(--gray2); font-size: .74rem; text-align: center; margin-top: 9px; line-height: 1.5; }
 
 /* ── MISC ───────────────────────────────────────── */
-.loading { text-align: center; padding: 36px; color: var(--gray); }
+.loading { text-align: center; padding: 36px; color: var(--gray); grid-column: 1 / -1; }
 .spinner { width: 30px; height: 30px; border: 3px solid rgba(37,99,235,.25); border-top-color: var(--accent2); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 10px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.empty-state { text-align: center; padding: 36px 16px; color: var(--gray2); font-size: .88rem; }
+.empty-state { text-align: center; padding: 36px 16px; color: var(--gray2); font-size: .88rem; grid-column: 1 / -1; }
 </style>
 </head>
 <body>
@@ -591,8 +614,8 @@ footer { position: relative; z-index: 1; border-top: 1px solid rgba(37,99,235,.1
   </div>
 
 
-  <!-- Cards -->
-  <div id="cardsList">
+  <!-- Cards — grid 2 kolom, gambar tetap 16:9 -->
+  <div id="cardsList" class="cards-grid">
     <div class="loading"><div class="spinner"></div><div>Memuat...</div></div>
   </div>
 
@@ -698,12 +721,11 @@ footer { position: relative; z-index: 1; border-top: 1px solid rgba(37,99,235,.1
     <div class="pay-item-name" id="payItemTitle"></div>
     <div class="pay-price"     id="payItemPrice"></div>
     <button class="pay-btn" onclick="startPayment()">Bayar Sekarang</button>
-    <div class="pay-note">Pembayaran aman via Midtrans.<br>Setelah berhasil, konten langsung terbuka.</div>
+    <div class="pay-note">Kamu akan diarahkan ke halaman pembayaran Saya Bayar.<br>Setelah berhasil, kembali ke sini dan konten akan otomatis terbuka.</div>
   </div>
 </div>
 
 <!-- ── SCRIPTS ─────────────────────────────────────────── -->
-<script src="https://app.midtrans.com/snap/snap.js" data-client-key="Mid-client-hMgGNF22it0OkQU5"></script>
 <script type="module" src="data.js"></script>
 
 <script>

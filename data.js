@@ -318,15 +318,11 @@ function renderCards() {
         <div class="card-locked"
           onclick="window._openPayModal('${item.id}','${esc(item.title)}',${item.price || 0})">
           ${item.imgUrl
-            ? `<img src="${esc(item.imgUrl)}"
-                style="width:100%;display:block;object-fit:cover;
-                       min-height:190px;max-height:290px;
-                       border-radius:18px;filter:blur(6px)" alt="">`
-            : `<div style="min-height:190px;background:linear-gradient(135deg,#1a3358,#0a1628);
-                border-radius:18px"></div>`
+            ? `<img src="${esc(item.imgUrl)}" style="filter:blur(6px)" alt="">`
+            : `<div style="background:linear-gradient(135deg,#1a3358,#0a1628)"></div>`
           }
           <div class="card-locked-overlay">
-            <div style="font-size:1.8rem">🔒</div>
+            <div style="font-size:1.4rem">🔒</div>
             <div class="lock-text">${esc(item.title)}</div>
             <div class="lock-price">${priceStr}</div>
             <button class="unlock-btn">Beli Akses</button>
