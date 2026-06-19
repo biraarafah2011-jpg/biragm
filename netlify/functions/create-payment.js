@@ -1,5 +1,6 @@
 // netlify/functions/create-payment.js
-// Server key dibaca dari environment variable MIDTRANS_SERVER_KEY
+// Payment gateway: Saya Bayar (sayabayar.com)
+// API key dibaca dari environment variable SAYABAYAR_API_KEY
 // Harga divalidasi dari Firebase — client tidak bisa manipulasi amount
 
 const https = require("https");
@@ -20,61 +21,34 @@ function firebaseGet(path) {
   });
 }
 
-// ── Helper: simpan unlock ke Firebase REST API ────────────────
-function firebaseSet(path, data) {
-  const dbUrl    = process.env.FIREBASE_DB_URL;
-  const fbSecret = process.env.FIREBASE_DB_SECRET; // Database secret untuk server-side write
+// ── Helper: kirim request ke Saya Bayar ───────────────────────
+function sayaBayarRequest(path, method, body) {
+  const apiKey = process.env.SAYABAYAR_API_KEY;
+  if (!apiKey) throw new Error("SAYABAYAR_API_KEY belum diset di env");
+
+  const data    = body ? JSON.stringify(body) : null;
+  const options = {
+    hostname: "api.sayabayar.com",
+    path,
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      "X-API-Key":    apiKey
+    }
+  };
+  if (data) options.headers["Content-Length"] = Buffer.byteLength(data);
+
   return new Promise((resolve, reject) => {
-    const body    = JSON.stringify(data);
-    const urlStr  = dbUrl + path + ".json" + (fbSecret ? "?auth=" + fbSecret : "");
-    const url     = new URL(urlStr);
-    const options = {
-      hostname: url.hostname,
-      path:     url.pathname + url.search,
-      method:   "PUT",
-      headers:  {
-        "Content-Type":   "application/json",
-        "Content-Length": Buffer.byteLength(body)
-      }
-    };
     const req = https.request(options, res => {
       let raw = "";
       res.on("data", chunk => raw += chunk);
-      res.on("end", () => resolve(raw));
-    });
-    req.on("error", reject);
-    req.write(body);
-    req.end();
-  });
-}
-
-// ── Helper: kirim request ke Midtrans ────────────────────────
-function midtransRequest(path, body) {
-  const serverKey = process.env.MIDTRANS_SERVER_KEY;
-  if (!serverKey) throw new Error("MIDTRANS_SERVER_KEY belum diset di env");
-  const auth    = Buffer.from(serverKey + ":").toString("base64");
-  const data    = JSON.stringify(body);
-  const options = {
-    hostname: "app.midtrans.com",
-    path,
-    method:   "POST",
-    headers:  {
-      "Content-Type":   "application/json",
-      "Authorization":  "Basic " + auth,
-      "Content-Length": Buffer.byteLength(data)
-    }
-  };
-  return new Promise((resolve, reject) => {
-    const req = https.request(options, res => {
-      let raw = "";
-      res.on("data",  chunk => raw += chunk);
-      res.on("end",   () => {
-        try { resolve(JSON.parse(raw)); }
-        catch (e) { reject(new Error("Midtrans parse error: " + raw)); }
+      res.on("end", () => {
+        try { resolve({ status: res.statusCode, body: JSON.parse(raw) }); }
+        catch (e) { reject(new Error("Saya Bayar parse error: " + raw)); }
       });
     });
     req.on("error", reject);
-    req.write(data);
+    if (data) req.write(data);
     req.end();
   });
 }
@@ -89,14 +63,9 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body);
 
     // ── 1. Ambil item_id dari request ──────────────────────────
-    const itemDetails = body.item_details;
-    if (!itemDetails || !Array.isArray(itemDetails) || itemDetails.length === 0) {
-      return { statusCode: 400, body: JSON.stringify({ error: "item_details wajib ada" }) };
-    }
-
-    const itemId = itemDetails[0]?.id;
+    const itemId = body.item_id;
     if (!itemId) {
-      return { statusCode: 400, body: JSON.stringify({ error: "item id tidak valid" }) };
+      return { statusCode: 400, body: JSON.stringify({ error: "item_id wajib ada" }) };
     }
 
     // ── 2. Ambil harga ASLI dari Firebase (jangan percaya client) ─
@@ -113,18 +82,81 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: "Harga item tidak valid" }) };
     }
 
-    // ── 3. Override gross_amount & item price dengan harga asli ──
-    body.transaction_details.gross_amount = realPrice;
-    body.item_details[0].price            = realPrice;
-    body.item_details[0].name             = item.title;
+    // ── 3. Bangun order_id internal kita sendiri ──────────────
+    // Format: biragm-<itemId6char>-<timestamp>
+    // (dipakai untuk mencocokkan unlock saat webhook masuk,
+    //  karena invoice_number dari Saya Bayar formatnya beda)
+    const orderId = "biragm-" + itemId.slice(-6) + "-" + Date.now();
 
-    // ── 4. Kirim ke Midtrans ───────────────────────────────────
-    const result = await midtransRequest("/snap/v1/transactions", body);
+    const customerName  = (body.customer_name  || "Guest").slice(0, 100);
+    const customerEmail = body.customer_email || "guest@biragm.com";
 
+    // ── 4. Buat invoice di Saya Bayar ──────────────────────────
+    const { status, body: result } = await sayaBayarRequest("/v1/invoices", "POST", {
+      customer_name:      customerName,
+      customer_email:     customerEmail,
+      amount:             realPrice,
+      description:        item.title,
+      channel_preference: "client",
+      redirect_url:        "https://biragm-website.netlify.app/",
+      // Simpan referensi item & order kita sendiri lewat metadata
+      // (kalau API Saya Bayar mendukung field metadata — aman diabaikan jika tidak)
+      metadata: {
+        order_id: orderId,
+        item_id:  itemId
+      }
+    });
+
+    if (status !== 201 || !result.success) {
+      return {
+        statusCode: 502,
+        body: JSON.stringify({ error: result.message || "Gagal membuat invoice di Saya Bayar" })
+      };
+    }
+
+    // ── 5. Simpan pemetaan invoice_id -> order_id/item_id di Firebase ─
+    // Karena webhook Saya Bayar hanya mengirim invoice_id/invoice_number,
+    // bukan order_id custom kita, kita simpan pemetaannya di sini supaya
+    // payment-webhook.js bisa mencocokkan invoice yang lunas ke item yang benar.
+    const dbUrl    = process.env.FIREBASE_DB_URL;
+    const fbSecret = process.env.FIREBASE_DB_SECRET;
+    await new Promise((resolve, reject) => {
+      const mapBody = JSON.stringify({
+        orderId,
+        itemId,
+        itemId6:   itemId.slice(-6),
+        amount:    realPrice,
+        createdAt: Date.now()
+      });
+      const urlStr = dbUrl + "/invoice_map/" + result.data.id + ".json" +
+        (fbSecret ? "?auth=" + fbSecret : "");
+      const url = new URL(urlStr);
+      const options = {
+        hostname: url.hostname,
+        path:     url.pathname + url.search,
+        method:   "PUT",
+        headers:  { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(mapBody) }
+      };
+      const req = https.request(options, res => {
+        let raw = "";
+        res.on("data", c => raw += c);
+        res.on("end", () => resolve(raw));
+      });
+      req.on("error", reject);
+      req.write(mapBody);
+      req.end();
+    });
+
+    // ── 6. Kembalikan info yang dibutuhkan frontend ────────────
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(result)
+      body: JSON.stringify({
+        order_id:     orderId,
+        invoice_id:   result.data.id,
+        payment_url:  result.data.payment_url,
+        expired_at:   result.data.expired_at
+      })
     };
 
   } catch (e) {

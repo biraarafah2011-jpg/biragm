@@ -1,20 +1,46 @@
 // netlify/functions/payment-webhook.js
-// Midtrans mengirim notifikasi ke sini setelah pembayaran sukses
+// Saya Bayar mengirim notifikasi ke sini saat status invoice berubah
+// Events yang didaftarkan: invoice.paid, invoice.expired, invoice.cancelled
 // Unlock disimpan ke Firebase oleh SERVER — bukan oleh browser
 //
-// Di dashboard Midtrans, set Notification URL ke:
+// Di dashboard Saya Bayar, Webhook URL sudah diset ke:
 //   https://biragm-website.netlify.app/.netlify/functions/payment-webhook
 
 const https  = require("https");
 const crypto = require("crypto");
 
-// ── Verifikasi signature Midtrans ─────────────────────────────
-function verifySignature(orderId, statusCode, grossAmount, serverKey) {
-  const raw  = orderId + statusCode + grossAmount + serverKey;
-  return crypto.createHash("sha512").update(raw).digest("hex");
+// ── Verifikasi signature Saya Bayar (HMAC-SHA256 atas raw body) ─
+function verifySignature(rawBody, signatureHeader, secret) {
+  if (!signatureHeader) return false;
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(rawBody)
+    .digest("hex");
+
+  // timingSafeEqual butuh buffer dengan panjang sama
+  const a = Buffer.from(signatureHeader);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
 }
 
-// ── Tulis ke Firebase via REST ────────────────────────────────
+// ── Helper: baca dari Firebase REST API ───────────────────────
+function firebaseGet(path) {
+  const dbUrl = process.env.FIREBASE_DB_URL;
+  return new Promise((resolve, reject) => {
+    const url = new URL(dbUrl + path + ".json");
+    https.get(url.toString(), res => {
+      let raw = "";
+      res.on("data", chunk => raw += chunk);
+      res.on("end", () => {
+        try { resolve(JSON.parse(raw)); }
+        catch (e) { reject(new Error("Firebase parse error: " + raw)); }
+      });
+    }).on("error", reject);
+  });
+}
+
+// ── Helper: tulis ke Firebase via REST ────────────────────────
 function firebaseSet(path, data) {
   const dbUrl    = process.env.FIREBASE_DB_URL;
   const fbSecret = process.env.FIREBASE_DB_SECRET;
@@ -49,52 +75,72 @@ exports.handler = async (event) => {
   }
 
   try {
-    const notif = JSON.parse(event.body);
+    const secret = process.env.SAYABAYAR_WEBHOOK_SECRET;
+    if (!secret) {
+      console.error("SAYABAYAR_WEBHOOK_SECRET belum diset di env");
+      return { statusCode: 500, body: JSON.stringify({ error: "Server misconfigured" }) };
+    }
 
-    // ── 1. Verifikasi signature dari Midtrans ─────────────────
-    const serverKey    = process.env.MIDTRANS_SERVER_KEY;
-    const expectedSig  = verifySignature(
-      notif.order_id,
-      notif.status_code,
-      notif.gross_amount,
-      serverKey
-    );
+    // ── 1. Ambil RAW body (penting — signature dihitung dari raw, bukan parsed) ─
+    // Netlify Functions memberi event.body sebagai string mentah secara default.
+    const rawBody = event.body;
+    const signature = event.headers["x-webhook-signature"] || event.headers["X-Webhook-Signature"];
 
-    if (notif.signature_key !== expectedSig) {
+    // ── 2. Verifikasi signature ────────────────────────────────
+    if (!verifySignature(rawBody, signature, secret)) {
       console.error("Signature mismatch — request palsu ditolak");
-      return { statusCode: 403, body: JSON.stringify({ error: "Invalid signature" }) };
+      return { statusCode: 401, body: JSON.stringify({ error: "Invalid signature" }) };
     }
 
-    // ── 2. Hanya proses jika transaksi benar-benar sukses ─────
-    const successStatuses = ["capture", "settlement"];
-    if (!successStatuses.includes(notif.transaction_status)) {
-      return { statusCode: 200, body: JSON.stringify({ status: "ignored", txStatus: notif.transaction_status }) };
+    const notif = JSON.parse(rawBody);
+    const eventType = notif.event;
+    const data       = notif.data || {};
+    const invoiceId  = data.invoice_id;
+
+    if (!invoiceId) {
+      return { statusCode: 400, body: JSON.stringify({ error: "invoice_id tidak ada di payload" }) };
     }
-    // Untuk kartu kredit, pastikan fraud_status bersih
-    if (notif.payment_type === "credit_card" && notif.fraud_status !== "accept") {
-      return { statusCode: 200, body: JSON.stringify({ status: "ignored", reason: "fraud_status not accept" }) };
+
+    // ── 3. Ambil pemetaan invoice -> item/order yang kita simpan saat create ─
+    const mapping = await firebaseGet("/invoice_map/" + invoiceId);
+    if (!mapping) {
+      console.error("Tidak ada mapping untuk invoice:", invoiceId);
+      return { statusCode: 200, body: JSON.stringify({ status: "ignored", reason: "no mapping found" }) };
     }
 
-    // ── 3. Parse order_id → ambil itemId ─────────────────────
-    // Format order_id: "biragm-<itemId6char>-<timestamp>"
-    const parts  = notif.order_id.split("-");
-    // item id 6 char ada di index 1
-    // Tapi kita simpan full order_id untuk referensi
-    const itemId6 = parts[1]; // 6 char suffix dari item id
+    // ── 4. Proses berdasarkan jenis event ──────────────────────
+    if (eventType === "invoice.paid") {
+      // Validasi jumlah yang dibayar cocok dengan harga asli item
+      // (amount dari Saya Bayar bisa termasuk unique_code, jadi cek amount dasar)
+      if (Number(data.amount) !== Number(mapping.amount)) {
+        console.error("Jumlah tidak cocok:", data.amount, "vs", mapping.amount);
+        return { statusCode: 200, body: JSON.stringify({ status: "ignored", reason: "amount mismatch" }) };
+      }
 
-    // ── 4. Simpan unlock ke Firebase path verified_unlocked ───
-    // Key: order_id (unik per transaksi)
-    await firebaseSet("/verified_unlocked/" + notif.order_id, {
-      orderId:      notif.order_id,
-      itemId6:      itemId6,
-      grossAmount:  notif.gross_amount,
-      paidAt:       Date.now(),
-      txStatus:     notif.transaction_status,
-      paymentType:  notif.payment_type,
-      verified:     true
-    });
+      await firebaseSet("/verified_unlocked/" + mapping.orderId, {
+        orderId:        mapping.orderId,
+        itemId6:        mapping.itemId6,
+        invoiceId:      invoiceId,
+        invoiceNumber:  data.invoice_number || "",
+        amount:         data.amount,
+        paymentChannel: data.payment_channel || "",
+        paidAt:         Date.now(),
+        verified:       true
+      });
 
-    console.log("Unlock tersimpan untuk order:", notif.order_id);
+      console.log("Unlock tersimpan untuk invoice:", invoiceId, "order:", mapping.orderId);
+
+    } else if (eventType === "invoice.expired") {
+      console.log("Invoice expired:", invoiceId);
+      // Tidak ada unlock yang perlu ditulis — cukup dicatat
+
+    } else if (eventType === "invoice.cancelled") {
+      console.log("Invoice cancelled:", invoiceId);
+      // Tidak ada unlock yang perlu ditulis — cukup dicatat
+
+    } else {
+      return { statusCode: 200, body: JSON.stringify({ status: "ignored", eventType }) };
+    }
 
     return {
       statusCode: 200,
