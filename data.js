@@ -1,6 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 //  data.js  —  BIRA GM
 //  Beli tanpa login — unlock disimpan selamanya by device key
+//  Payment gateway: Saya Bayar (sayabayar.com)
 // ─────────────────────────────────────────────────────────────
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -68,14 +69,12 @@ function saveOrderId(orderId) {
 }
 
 // Cek ke Firebase: apakah order_id ini sudah diverifikasi server?
-async function verifyOrderUnlock(orderId, itemId) {
+async function verifyOrderUnlock(orderId, itemId6) {
   try {
     const snap = await get(ref(db, "verified_unlocked/" + orderId));
     const data = snap.val();
     if (!data || !data.verified) return false;
-    // Cocokkan 6 char terakhir item id
-    const item6 = itemId.slice(-6);
-    if (data.itemId6 !== item6) return false;
+    if (data.itemId6 !== itemId6) return false;
     return true;
   } catch (e) {
     console.error("verifyOrderUnlock:", e);
@@ -88,7 +87,7 @@ async function loadVerifiedUnlocks() {
   const orders = getSavedOrderIds();
   for (const orderId of orders) {
     // Format: biragm-<itemId6>-<timestamp>
-    const parts  = orderId.split("-");
+    const parts   = orderId.split("-");
     const itemId6 = parts[1];
     if (!itemId6) continue;
     const isValid = await verifyOrderUnlock(orderId, itemId6);
@@ -535,7 +534,10 @@ window._deleteItem = async id => {
 };
 
 // ═════════════════════════════════════════════════════════════
-//  PAYMENT — lewat Netlify Function, tanpa login
+//  PAYMENT — lewat Netlify Function (Saya Bayar), tanpa login
+//  Saya Bayar tidak punya popup token seperti Midtrans Snap —
+//  user diarahkan (redirect) ke payment_url, lalu kembali ke site
+//  ini lewat redirect_url. Kita cek status unlock saat user balik.
 // ═════════════════════════════════════════════════════════════
 window._openPayModal = (id, title, price) => {
   payingItem = { id, title, price };
@@ -553,86 +555,80 @@ window.closePayModal = () => {
 window.startPayment = async () => {
   if (!payingItem) return;
 
-  const orderId = "biragm-" + payingItem.id.slice(-6) + "-" + Date.now();
-  const name    = currentUser?.displayName
+  const name  = currentUser?.displayName
     || currentUser?.email?.split("@")[0]
     || "Guest";
-  const email   = currentUser?.email || "guest@biragm.com";
-
-  const params = {
-    transaction_details: {
-      order_id:     orderId,
-      gross_amount: Number(payingItem.price)
-    },
-    customer_details: { first_name: name, email },
-    item_details: [{
-      id:       payingItem.id,
-      price:    Number(payingItem.price),
-      quantity: 1,
-      name:     payingItem.title
-    }]
-  };
+  const email = currentUser?.email || "guest@biragm.com";
 
   try {
-    // Panggil Netlify Function — bukan langsung ke Midtrans
     const res = await fetch("/.netlify/functions/create-payment", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(params)
+      body:    JSON.stringify({
+        item_id:        payingItem.id,
+        customer_name:  name,
+        customer_email: email
+      })
     });
 
     const data = await res.json();
-    if (!data.token) {
-      alert("Gagal membuat transaksi: " + (data.error_messages?.[0] || "Coba lagi."));
+    if (!data.payment_url || !data.order_id) {
+      alert("Gagal membuat transaksi: " + (data.error || "Coba lagi."));
       return;
     }
 
+    // Simpan order_id SEBELUM redirect — supaya saat user kembali
+    // ke site ini, kita tahu order_id mana yang harus dicek statusnya.
+    saveOrderId(data.order_id);
+
+    // Kalau kebetulan login, simpan juga ke akun (opsional, untuk
+    // kemudahan multi-device — tetap hanya menyimpan referensi,
+    // tidak menandai unlocked sampai webhook memverifikasi server-side)
+    if (currentUser) {
+      await set(
+        ref(db, "pending_orders/" + currentUser.uid + "/" + data.order_id),
+        { itemId: payingItem.id, createdAt: Date.now() }
+      );
+    }
+
     closePayModal();
-    const savedItem = { ...payingItem };
-    const itemRef   = ref(db, "items/" + savedItem.id);
 
-    window.snap.pay(data.token, {
-      onSuccess: async result => {
-        // Simpan order_id ke localStorage — server akan verifikasi via webhook
-        saveOrderId(result.order_id);
-
-        // Kalau kebetulan login, simpan juga ke akun (opsional, untuk kemudahan multi-device)
-        if (currentUser) {
-          await set(
-            ref(db, "unlocked/" + currentUser.uid + "/" + savedItem.id),
-            { orderId: result.order_id, paidAt: Date.now(), amount: savedItem.price }
-          );
-        }
-
-        // Tunggu sebentar agar webhook sempat memproses, lalu cek verifikasi
-        let verified = false;
-        for (let attempt = 0; attempt < 8; attempt++) {
-          await new Promise(r => setTimeout(r, 1500));
-          verified = await verifyOrderUnlock(result.order_id, savedItem.id);
-          if (verified) break;
-        }
-
-        if (verified) {
-          unlockedItems.add(savedItem.id);
-          renderCards();
-          const snap2   = await get(itemRef);
-          const linkUrl = snap2.val()?.linkUrl;
-          if (linkUrl) window.location.href = linkUrl;
-        } else {
-          // Webhook mungkin delay — beri tahu user untuk refresh
-          alert("Pembayaran berhasil! Konten akan terbuka otomatis. Jika belum terbuka, coba refresh halaman.");
-          renderCards();
-        }
-      },
-      onPending: () => alert("Menunggu konfirmasi pembayaran."),
-      onError:   () => alert("Pembayaran gagal, silakan coba lagi."),
-      onClose:   () => {}
-    });
+    // Redirect ke halaman bayar Saya Bayar
+    window.location.href = data.payment_url;
 
   } catch (e) {
     alert("Error: " + e.message);
   }
 };
+
+// ── Cek unlock setiap kali halaman dibuka/kembali ──────────────
+// (menangani kasus user kembali dari payment_url lewat redirect_url,
+//  atau menutup tab dan membuka lagi nanti setelah webhook selesai)
+async function checkPendingOrders() {
+  const orders = getSavedOrderIds();
+  let anyNewUnlock = false;
+
+  for (const orderId of orders) {
+    const itemId6 = orderId.split("-")[1];
+    if (!itemId6 || unlockedItems.has("pending_" + itemId6)) continue;
+    const isValid = await verifyOrderUnlock(orderId, itemId6);
+    if (isValid) {
+      unlockedItems.add("pending_" + itemId6);
+      anyNewUnlock = true;
+    }
+  }
+
+  if (anyNewUnlock) {
+    resolvePendingUnlocks();
+    renderCards();
+  }
+}
+
+// Jalankan sekali saat load, dan setiap kali tab kembali aktif
+// (berguna karena user pindah ke tab pembayaran lalu balik lagi)
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") checkPendingOrders();
+});
 
 // ═════════════════════════════════════════════════════════════
 //  COMMENTS & RATINGS
