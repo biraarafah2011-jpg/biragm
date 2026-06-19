@@ -1,12 +1,23 @@
 # ══════════════════════════════════════════════════════════════
-#  NETLIFY ENVIRONMENT VARIABLES — BIRA GM
+#  NETLIFY ENVIRONMENT VARIABLES — BIRA GM (Saya Bayar)
 #  Masukkan semua ini di:
 #  Netlify Dashboard → biragm-website → Site Configuration →
 #  Environment Variables → Add variable
+#
+#  PENTING: isi VALUE-nya langsung di Netlify, JANGAN simpan
+#  key asli di file ini atau di mana pun yang ter-commit ke git.
 # ══════════════════════════════════════════════════════════════
 
-# Midtrans Server Key (dari Midtrans Dashboard → Settings → Access Keys)
-MIDTRANS_SERVER_KEY=Mid-server-UTDNLi0Xs3UbgRmaxU1nA7_b
+# Saya Bayar API Key (dari dashboard sayabayar.com → API Keys)
+# Generate key BARU dulu di dashboard (yang lama harus di-revoke
+# karena sempat ter-paste di tempat yang tidak aman) — lalu isi
+# value-nya di Netlify, bukan di sini.
+SAYABAYAR_API_KEY=isi_langsung_di_netlify
+
+# Saya Bayar Webhook Secret (dari dashboard sayabayar.com → Webhook)
+# Sama seperti di atas — regenerate dulu, baru isi value barunya
+# di Netlify.
+SAYABAYAR_WEBHOOK_SECRET=isi_langsung_di_netlify
 
 # Firebase Realtime Database URL
 FIREBASE_DB_URL=https://biragm-website-default-rtdb.asia-southeast1.firebasedatabase.app
@@ -14,11 +25,17 @@ FIREBASE_DB_URL=https://biragm-website-default-rtdb.asia-southeast1.firebasedata
 # Firebase Database Secret (untuk server-side write tanpa auth)
 # Ambil dari: Firebase Console → Project Settings → Service Accounts →
 # Database Secrets → Show
-# (Kalau tidak ada, buat baru di sana)
-FIREBASE_DB_SECRET=GANTI_DENGAN_SECRET_KAMU
+FIREBASE_DB_SECRET=isi_dengan_secret_kamu
 
 # ══════════════════════════════════════════════════════════════
 #  SETELAH SET ENV VARS:
-#  1. Hapus key lama dari kode (sudah dilakukan di file yang difix)
-#  2. Redeploy site di Netlify
+#  1. Pastikan create-payment.js dan payment-webhook.js sudah
+#     di /netlify/functions/ menggantikan file lama.
+#  2. Update data.js dan index.html sesuai patch yang diberikan.
+#  3. Redeploy site di Netlify.
+#  4. Hapus skrip Midtrans Snap (app.midtrans.com/snap/snap.js)
+#     dari index.html — sudah tidak dipakai.
+#  5. Di dashboard Saya Bayar, pastikan webhook URL tetap:
+#     https://biragm-website.netlify.app/.netlify/functions/payment-webhook
+#     dengan event: invoice.paid, invoice.expired, invoice.cancelled
 # ══════════════════════════════════════════════════════════════
