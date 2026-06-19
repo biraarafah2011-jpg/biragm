@@ -7,9 +7,11 @@ const https = require("https");
 
 // ── Helper: fetch dari Firebase REST API ──────────────────────
 function firebaseGet(path) {
-  const dbUrl = process.env.FIREBASE_DB_URL; // e.g. https://biragm-website-default-rtdb.asia-southeast1.firebasedatabase.app
+  const dbUrl    = process.env.FIREBASE_DB_URL;
+  const fbSecret = process.env.FIREBASE_DB_SECRET;
   return new Promise((resolve, reject) => {
-    const url = new URL(dbUrl + path + ".json");
+    const urlStr = dbUrl + path + ".json" + (fbSecret ? "?auth=" + fbSecret : "");
+    const url    = new URL(urlStr);
     https.get(url.toString(), res => {
       let raw = "";
       res.on("data", chunk => raw += chunk);
@@ -69,7 +71,10 @@ exports.handler = async (event) => {
     }
 
     // ── 2. Ambil harga ASLI dari Firebase (jangan percaya client) ─
+    console.log("[1] Mengambil item dari Firebase, itemId:", itemId);
     const item = await firebaseGet("/items/" + itemId);
+    console.log("[2] Data item dari Firebase:", JSON.stringify(item));
+
     if (!item) {
       return { statusCode: 404, body: JSON.stringify({ error: "Item tidak ditemukan" }) };
     }
@@ -78,36 +83,36 @@ exports.handler = async (event) => {
     }
 
     const realPrice = Number(item.price);
+    console.log("[3] Harga item:", realPrice);
     if (!realPrice || realPrice <= 0) {
       return { statusCode: 400, body: JSON.stringify({ error: "Harga item tidak valid" }) };
     }
 
     // ── 3. Bangun order_id internal kita sendiri ──────────────
-    // Format: biragm-<itemId6char>-<timestamp>
-    // (dipakai untuk mencocokkan unlock saat webhook masuk,
-    //  karena invoice_number dari Saya Bayar formatnya beda)
     const orderId = "biragm-" + itemId.slice(-6) + "-" + Date.now();
 
     const customerName  = (body.customer_name  || "Guest").slice(0, 100);
     const customerEmail = body.customer_email || "guest@biragm.com";
 
     // ── 4. Buat invoice di Saya Bayar ──────────────────────────
-    const { status, body: result } = await sayaBayarRequest("/v1/invoices", "POST", {
+    const invoicePayload = {
       customer_name:      customerName,
       customer_email:     customerEmail,
       amount:             realPrice,
       description:        item.title,
       channel_preference: "client",
-      redirect_url:        "https://biragm-website.netlify.app/",
-      // Simpan referensi item & order kita sendiri lewat metadata
-      // (kalau API Saya Bayar mendukung field metadata — aman diabaikan jika tidak)
-      metadata: {
-        order_id: orderId,
-        item_id:  itemId
-      }
-    });
+      redirect_url:       "https://biragm-website.netlify.app/"
+    };
+
+    console.log("[4] Mengirim request ke Saya Bayar:", JSON.stringify(invoicePayload));
+
+    const { status, body: result } = await sayaBayarRequest("/v1/invoices", "POST", invoicePayload);
+
+    console.log("[5] Saya Bayar HTTP status:", status);
+    console.log("[6] Saya Bayar response body:", JSON.stringify(result));
 
     if (status !== 201 || !result.success) {
+      console.error("[ERROR] Saya Bayar gagal — status:", status, "message:", result.message, "errors:", JSON.stringify(result.errors || result));
       return {
         statusCode: 502,
         body: JSON.stringify({ error: result.message || "Gagal membuat invoice di Saya Bayar" })
@@ -115,9 +120,6 @@ exports.handler = async (event) => {
     }
 
     // ── 5. Simpan pemetaan invoice_id -> order_id/item_id di Firebase ─
-    // Karena webhook Saya Bayar hanya mengirim invoice_id/invoice_number,
-    // bukan order_id custom kita, kita simpan pemetaannya di sini supaya
-    // payment-webhook.js bisa mencocokkan invoice yang lunas ke item yang benar.
     const dbUrl    = process.env.FIREBASE_DB_URL;
     const fbSecret = process.env.FIREBASE_DB_SECRET;
     await new Promise((resolve, reject) => {
@@ -140,7 +142,10 @@ exports.handler = async (event) => {
       const req = https.request(options, res => {
         let raw = "";
         res.on("data", c => raw += c);
-        res.on("end", () => resolve(raw));
+        res.on("end", () => {
+          console.log("[7] Firebase invoice_map tersimpan:", raw);
+          resolve(raw);
+        });
       });
       req.on("error", reject);
       req.write(mapBody);
